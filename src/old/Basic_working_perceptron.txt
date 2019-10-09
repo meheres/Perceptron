@@ -1,0 +1,246 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.StringTokenizer;
+
+/**
+ * @author Mihir Sharma
+ * @version 1.0
+ * Created on Friday, 9/6/19
+ *
+ * The SimpleNet class is a Java implementation of a basic neural network. The network attempts to solve a basic logic problem,
+ * either AND, OR, or XOR, using a two-connectivity network with three layers of activation. The neural network will take in two
+ * boolean inputs, represented by 1 (true) and 0 (false). It will output what it believes the answer to the logic problem based
+ * on the inputs should be. When constructing the Simple Network, there should be an input file that provides the inputs,
+ * weights, and expected outputs.
+ *
+ * Functions in this class include the following:
+ * - readInput, which reads the input from the constructor's filename then populates the inputs, weights, and expected outputs.
+ * - runNetwork, which uses the inputs and weights to run the Simple Network for an AND logic table.
+ * - main, which instantiates the Simple Network and runs the other two functions. The main also prints the output and its
+ *   expected comparison.
+ */
+public class Perceptron
+{
+
+    int numTrials;                     // The number of trials to be run.
+    int minimumError;                  // The minimum error for training.
+    int inputNodes;                    // The number of nodes in the input activation layer.
+    int[] hiddenLayerNodes;            // The number of nodes in each hidden activation layer.
+    int outputNodes;                   // The number of nodes in the output activation layer.
+    String inputFileName;              // The name of the input file. Should be written as a full path.
+
+    static final int NUM_COLUMNS = 2;  // One for the input layer, one for the output layer.
+
+    BufferedReader bufferedReader;     // bufferedReader is for the input file. It allows for quick line-by-line reading of the file.
+    StringTokenizer stringTokenizer;   // stringTokenizer reads each line provided by the BufferedReader, allowing for
+    // token-by-token reading.
+
+    int numberActivationLayers;        // The number of connectivity layers will be one less than the number of activation layers.
+    // The number of activation layers will be 2 more than the number of hidden layers, one for
+    // input activations and one for output activations.
+
+    double[] inputs;                 // An Array that holds the values for the input activations. Read in first line of input
+    // file.
+
+    double[] expectedOutputs;        // An Array that holds the values for the expected outputs, for comparison with the actual
+    // outputs.
+
+    double[][] activationLayers;       // A 2D Array that represents the different activation layers. First index will be the
+    // number of activation layers, and the second index will specify which node from the
+    // activation layer to use.
+
+    double[][][] connectivityLayers;   // A 3D Array that represents the connectivity layers.
+
+
+    /**
+     * SimpleNet is the constructor for the neural network. It creates the activation layers and connectivity layers for the
+     * network. The constructor also determines the most number of nodes by iterating over all of the activation layers.
+     * @param inputNodes
+     * @param hiddenLayerNodes
+     * @param outputNodes
+     * @param inputFileName
+     */
+    public Perceptron(int inputNodes, int[] hiddenLayerNodes, int outputNodes, String inputFileName)
+    {
+        this.inputNodes = inputNodes;
+        this.hiddenLayerNodes = hiddenLayerNodes;
+        this.outputNodes = outputNodes;
+        this.numberActivationLayers = 2 + hiddenLayerNodes.length;  // add 2 to the number of hidden layers for the total number
+                                                                    // of layers (1 input + n hidden + 1 output)
+        this.inputFileName = inputFileName;
+        this.inputs = new double[inputNodes];
+        this.expectedOutputs = new double[outputNodes];
+        int maxNumberNodes = inputNodes;
+        for (int i = 0; i < hiddenLayerNodes.length; i++)
+        {
+            maxNumberNodes = Math.max(maxNumberNodes, hiddenLayerNodes[i]);
+        }
+        maxNumberNodes = Math.max(maxNumberNodes, outputNodes);
+
+        // the first index of the activationLayers represents the number of nodes in the layer (limited by the maximum number of
+        // nodes in the neural network, while the second index is the number of activation layers.
+        activationLayers = new double[maxNumberNodes][numberActivationLayers];
+        // the first index of the connectivity layer represents the
+        connectivityLayers = new double[numberActivationLayers - 1]
+                [numberActivationLayers - 1]
+                [numberActivationLayers - 1];
+    }
+
+    /**
+     * Method readInput uses the input file to populate three class level objects: the array of inputs, the 3D array of weights,
+     * and the expected output value.
+     */
+    public void readInput()
+    {
+        try
+        {
+            bufferedReader = new BufferedReader(new FileReader(inputFileName));
+            stringTokenizer = new StringTokenizer(bufferedReader.readLine());
+        } catch (IOException e)
+        {
+            throw new IllegalArgumentException("Input " + e.toString() + " not accepted, terminating.");
+        }
+
+        // Iterate over the inputs in the first line then populate the input activation array
+        for (int i = 0; i < inputNodes; i++)
+        {
+            inputs[i] = Double.parseDouble(stringTokenizer.nextToken());
+        }
+
+        try
+        {
+            // Advance the Buffered Reader by one line to begin reading the weights
+            stringTokenizer = new StringTokenizer(bufferedReader.readLine());
+        } catch (IOException e)
+        {
+            throw new IllegalArgumentException("Input " + e.toString() + " incorrectly shows weight, terminating.");
+        }
+
+        // Iterate over the 3D array and populate it with the weights as written in the weights file
+        for (int i = 0; i < connectivityLayers.length; i++)
+        {
+            for (int j = 0; j < connectivityLayers[i].length; j++)
+            {
+                for (int k = 0; k < connectivityLayers[i][j].length; k++)
+                {
+                    connectivityLayers[i][j][k] = Double.parseDouble(stringTokenizer.nextToken());
+                }
+            }
+        }
+
+        try
+        {
+            // Advance the Buffered Reader by one line to begin reading the expected outputs
+            stringTokenizer = new StringTokenizer(bufferedReader.readLine());
+        }
+        catch (IOException e)
+        {
+            throw new IllegalArgumentException("Input " + e.toString() + " incorrectly shows expected output, terminating.");
+        }
+        for (int i = 0; i < outputNodes; i++)
+        {
+            expectedOutputs[i] = Double.parseDouble(stringTokenizer.nextToken());
+        }
+    }
+
+
+    /**
+     * The main method is the manner in which the Simple Network is run. Currently, it creates a 2-2-1 network and then runs the
+     * readInput and runNetwork methods on that network. Finally, the network outputs its result for the test value. Currently,
+     * it is limited by the input file -- in the event that the input file is formatted incorrectly, the program will shut down.
+     *
+     * @param args The arguments for the main method.
+     */
+    public static void main(String[] args) throws IOException
+    {
+        int[] inputarr = new int[1];
+        double[] inputarr2 = new double[2];
+        inputarr2[0] = 0.0;
+        inputarr2[1] = 1.0;
+        inputarr[0] = 2;
+        Perceptron testNetwork = new Perceptron(2, inputarr, 1, "/Users/mihir/IdeaProjects/Neural Networks/Java XOR " +
+              "Implementation/src/inputs/inputFile11.txt");
+        testNetwork.readInput();
+        testNetwork.randomizeWeights();
+        testNetwork.runNetwork();
+        testNetwork.printResult();
+    }
+
+    /**
+     * Method runNetwork runs the Simple Network class. It follows the design document's guidelines when implementing the network.
+     * The method works by using the dot product of a given node's previous activation layer and the connectivity pattern's
+     * vector, then running that output through a threshold function. If the current activation layer is the input activation
+     * layer, the method assigns the values read from the file.
+     */
+    public void runNetwork()
+    {
+        for (int columns = 0; columns < activationLayers[0].length; columns++)
+        {
+            for (int row = 0; row < activationLayers.length; row++)
+            {
+                if (columns == 0)
+                {
+                    activationLayers[row][columns] = inputs[row];
+                }
+                else
+                {
+                    for (int i = 0; i < activationLayers.length; i++)
+                    {
+                        activationLayers[row][columns] +=
+                                (activationLayers[i][columns - 1] *
+                                connectivityLayers[columns - 1][i][row]); // m will always be n - 1 in this case
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Method thresholdFunction limits the output of the dot product in the runNetwork method. Currently, it limits the
+     * dot product with a sigmoid function.
+     *
+     * @param dotProductResult The dotProductsResult parameter is the output of the dot product between the two vectors, as
+     *                         explained in the documentation for runNetwork. It will be limited by the threshold function.
+     * @return The threshold function will return the limited dot product result. Currently, the function returns exactly what it
+     * is given, and simply serves as a placeholder for future updates.
+     */
+    double thresholdFunction(double dotProductResult)
+    {
+        return dotProductResult;
+        // return 1 / (1 + Math.exp(-dotProductResult));
+    }
+
+    /**
+     * Method fDeriv finds the derivative of the threshold function.
+     *
+     * @param input
+     * @return
+     */
+    double fDeriv(double input)
+    {
+        return thresholdFunction(input) * (1 - thresholdFunction(input));
+    }
+
+    /**
+     * Randomizes the weights in the perceptron.
+     */
+    void randomizeWeights()
+    {
+        for (int i = 0; i < connectivityLayers.length; i++)
+        {
+            for (int j = 0; j < connectivityLayers[0].length; j++)
+            {
+                for (int k = 0; k < connectivityLayers[0][0].length; k++)
+                {
+                    connectivityLayers[i][j][k] = 10.0 * (Math.random());
+                }
+            }
+        }
+    }
+
+    void printResult()
+    {
+        System.out.println("Perceptron's result: " + activationLayers[0][activationLayers[0].length - 1]);
+    }
+}
