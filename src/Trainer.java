@@ -1,8 +1,18 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.StringTokenizer;
+
+
 public class Trainer
 {
    Perceptron perceptron;
-   String[] trialInputFiles;
+   String inputFile;
    static double MINIMUM_ERROR;
+   double[][] testCases;
+   int inputTestCase;
+   int counter;  // Counter checks the number of steps and provides the current test case (counter % testCases.length)
+   double[][] truths;   // A truth is an expected output.
 
    double lambda;
    double currError;
@@ -10,20 +20,25 @@ public class Trainer
    double[][][] oldWeights;
    double[][][] currWeights;
 
+   int inputNodes;                    // The number of nodes in the input activation layer.
+   int[] hiddenLayerNodes;            // The number of nodes in each hidden activation layer.
+   int outputNodes;                   // The number of nodes in the output activation layer.
 
    /**
     * Creates a new trainer for a perceptron, with a list of input filenames.
     *
-    * @param trialInputFiles The list of input file names. Must be a full path.
+    * @param inputFile The list of input file names. Must be a full path.
     */
-   public Trainer(String[] trialInputFiles)
+   public Trainer(String inputFile)
    {
-      this.trialInputFiles = trialInputFiles;
+      this.inputFile = inputFile;
+      readInputFile();
       this.currError = 1.0;                                                            // Total and Previous Total errors start
-      this.previousError = 0.0;                                                    // as 0.0.
+      this.previousError = 0.0;                                                        // as 0.0.
       this.lambda = 0.5;
+      this.counter = 0;
 
-      perceptron = new Perceptron(2, new int[]{2}, 1, trialInputFiles[0]);
+      perceptron = new Perceptron(2, new int[]{2}, 1, inputFile);
 
       this.oldWeights = new double[perceptron.weights.length]            // Create the currentWeights, copying the
             [perceptron.weights[0].length]         // values from the perceptron's set of
@@ -54,6 +69,55 @@ public class Trainer
    }
 
    /**
+    * Method readInputFile reads all the input as specified in the README file and updates the class level variables.
+    */
+   public void readInputFile()
+   {
+      BufferedReader bufferedReader;
+      StringTokenizer stringTokenizer;
+
+      try
+      {
+         bufferedReader = new BufferedReader(new FileReader(inputFile));
+
+         inputNodes = Integer.parseInt(bufferedReader.readLine());  // Find number of input nodes
+
+         stringTokenizer = new StringTokenizer(bufferedReader.readLine());
+         hiddenLayerNodes = new int[Integer.parseInt(stringTokenizer.nextToken())];
+         for (int i = 0; i < hiddenLayerNodes.length; i++)
+         {
+            hiddenLayerNodes[i] = Integer.parseInt(stringTokenizer.nextToken());  // Populate number of nodes per hidden layer
+         }
+
+         outputNodes = Integer.parseInt(bufferedReader.readLine());  // Find number of output nodes
+
+         int numberCases = Integer.parseInt(bufferedReader.readLine());  // Find the number of test cases
+         testCases = new double[numberCases][];
+         truths = new double[numberCases][];
+         for (int i = 0; i < numberCases; i++)
+         {
+            stringTokenizer = new StringTokenizer(bufferedReader.readLine());
+            testCases[i] = new double[inputNodes];
+            for (int j = 0; j < inputNodes; j++)
+            {
+               testCases[i][j] = Integer.parseInt(stringTokenizer.nextToken());
+            }
+            truths[i] = new double[outputNodes];
+            for (int j = 0; j < outputNodes; j++)
+            {
+               truths[i][j] = Integer.parseInt(stringTokenizer.nextToken());
+            }
+         } // Iterating over the number of test cases
+      } // Reads the input file.
+      catch (IOException e)
+      {
+         throw new IllegalArgumentException("Input " + e.toString() + " not accepted, terminating.");
+      }
+   }
+
+
+
+   /**
     * Function copyOldToNew is a helper function to copy the old weights to new ones. Will be used in each step.
     */
    public void copyWeights(double[][][] oldWeights, double[][][] newWeights)
@@ -67,64 +131,6 @@ public class Trainer
       }
    }
 
-  /*public void determineInputs(String inputFile)
-   {
-      BufferedReader bufferedReader;
-      StringTokenizer stringTokenizer;
-
-      try
-      {
-         bufferedReader = new BufferedReader(new FileReader(inputFileName));
-         stringTokenizer = new StringTokenizer(bufferedReader.readLine());
-      }
-      catch (IOException e)
-      {
-         throw new IllegalArgumentException("Input " + e.toString() + " not accepted, terminating.");
-      }
-
-      // Iterate over the inputs in the first line then populate the input activation array
-      for (int i = 0; i < inputs.length; i++)
-      {
-         inputs[i] = Double.parseDouble(stringTokenizer.nextToken());
-      }
-
-      try
-      {
-         // Advance the Buffered Reader by one line to begin reading the weights
-         stringTokenizer = new StringTokenizer(bufferedReader.readLine());
-      }
-      catch (IOException e)
-      {
-         throw new IllegalArgumentException("Input " + e.toString() + " incorrectly shows weight, terminating.");
-      }
-
-      // Iterate over the 3D array and populate it with the weights as written in the weights file
-      for (int i = 0; i < weights.length; i++)
-      {
-         for (int j = 0; j < weights[i].length; j++)
-         {
-            for (int k = 0; k < weights[i][j].length; k++)
-            {
-               weights[i][j][k] = Double.parseDouble(stringTokenizer.nextToken());
-            }
-         }
-      }
-
-      try
-      {
-         // Advance the Buffered Reader by one line to begin reading the expected outputs
-         stringTokenizer = new StringTokenizer(bufferedReader.readLine());
-      }
-      catch (IOException e)
-      {
-         throw new IllegalArgumentException("Input " + e.toString() + " incorrectly shows expected output, terminating.");
-      }
-      for (int i = 0; i < outputNodes; i++)
-      {
-         expectedOutputs[i] = Double.parseDouble(stringTokenizer.nextToken());
-      }
-   }*/
-
    /**
     * Main method for the Trainer reads the input files and then trains the network.
     *
@@ -132,12 +138,7 @@ public class Trainer
     */
    public static void main(String[] args)
    {
-      Trainer trainer = new Trainer(new String[]{
-            "/Users/mihir/IdeaProjects/Neural Networks/Java XOR Implementation/src/inputs/inputFile00.txt",
-            "/Users/mihir/IdeaProjects/Neural Networks/Java XOR Implementation/src/inputs/inputFile01.txt",
-            "/Users/mihir/IdeaProjects/Neural Networks/Java XOR Implementation/src/inputs/inputFile10.txt",
-            "/Users/mihir/IdeaProjects/Neural Networks/Java XOR Implementation/src/inputs/inputFile11.txt"});
-
+      Trainer trainer = new Trainer("/Users/mihir/IdeaProjects/Neural Networks/Java XOR Implementation/src/old/inputsFile.txt");
       trainer.train();
 
    }
@@ -151,8 +152,7 @@ public class Trainer
     */
    void train()
    {
-      int counter = 0;
-      while (currError > 0.01 && currError != previousError && counter < 100)
+      while (currError > 0.01 && currError != previousError && counter < 1000)
       {
          step();
          counter++;
@@ -166,7 +166,7 @@ public class Trainer
     */
    public void step()
    {
-      double[][][] totalPartialWeights = this.getTotalPartialWeights();
+      double[][][] currPartialWeights = this.getCurrPartialWeights();
       copyWeights(currWeights, oldWeights);
       for (int i = 0; i < currWeights.length; i++)
       {
@@ -174,66 +174,52 @@ public class Trainer
          {
             for (int k = 0; k < currWeights[0][0].length; k++)
             {
-               currWeights[i][j][k] += (-lambda * totalPartialWeights[i][j][k]); // Updates currWeights to new weights
+               currWeights[i][j][k] += -(lambda * currPartialWeights[i][j][k]); // Updates currWeights to new weights
             }
          }
       }
 
       perceptron.setWeights(currWeights);
-      for (int d = 0; d < trialInputFiles.length; d++)
-      {
-         double[] inputTestCase;
-         if (d == 0) inputTestCase = new double[]{1.0, 1.0};
-         else if (d == 1) inputTestCase = new double[]{0.0, 1.0};
-         else if (d == 2) inputTestCase = new double[]{1.0, 0.0};
-         else inputTestCase = new double[]{0.0, 0.0};
-         perceptron.runNetwork(inputTestCase);
-      }
+      perceptron.runNetwork(testCases[counter % testCases.length]);
 
       double newError = findTotalError();
       if (newError > currError)
       {
          perceptron.setWeights(oldWeights);
+         copyWeights(oldWeights, currWeights);
+      }
+      else
+      {
+         perceptron.setWeights(currWeights);
       }
    }
 
-   public double[][][] getTotalPartialWeights()
+   /**
+    * Method getCurrPartialWeights gets the partial derivatives for the current test case and adds them to a 3D array of partial
+    * derivatives.
+    *
+    * @return The 3D array of partial derivatives.
+    */
+   public double[][][] getCurrPartialWeights()
    {
       double[][][] totalPartialWeights = new double[currWeights.length][currWeights[0].length][currWeights[0][0].length];
 
-      // using magic numbers
-      for (int i = 0; i < 4; i++)
-      {
-         double[] inputTestCase;
-         if (i == 0) inputTestCase = new double[]{1.0, 1.0};
-         else if (i == 1) inputTestCase = new double[]{0.0, 1.0};
-         else if (i == 2) inputTestCase = new double[]{1.0, 0.0};
-         else inputTestCase = new double[]{0.0, 0.0};
-         perceptron.runNetwork(inputTestCase);
-         double[][][] partialsOfNetworkWeights = perceptron.findPartials();
+      perceptron.runNetwork(testCases[counter % testCases.length]);
+      double[][][] partialsOfNetworkWeights = perceptron.findPartials();
 
-         for (int j = 0; j < partialsOfNetworkWeights.length; j++)
+      for (int j = 0; j < partialsOfNetworkWeights.length; j++)
+      {
+         for (int k = 0; k < partialsOfNetworkWeights[0].length; k++)
          {
-            for (int k = 0; k < partialsOfNetworkWeights[0].length; k++)
+            for (int l = 0; l < partialsOfNetworkWeights[0][0].length; l++)
             {
-               for (int l = 0; l < partialsOfNetworkWeights[0][0].length; l++)
-               {
-                  totalPartialWeights[j][k][l] += partialsOfNetworkWeights[j][k][l];
-               }
+               totalPartialWeights[j][k][l] += partialsOfNetworkWeights[j][k][l];
             }
          }
       }
-
-      /*
-      for (String inputFile : inputFiles)
-      {
-
-      }
-
-      How you should be doing it
-       */
       return totalPartialWeights;
    }
+
 
 
    /**
@@ -241,7 +227,7 @@ public class Trainer
     */
    public double findTotalError()
    {
-      for (int d = 0; d < trialInputFiles.length; d++)
+      /*for (int d = 0; d < inputFile.length; d++)
       {
          double[] inputTestCase;
          if (d == 0) inputTestCase = new double[]{1.0, 1.0};
@@ -249,7 +235,7 @@ public class Trainer
          else if (d == 2) inputTestCase = new double[]{1.0, 0.0};
          else inputTestCase = new double[]{0.0, 0.0};
          perceptron.runNetwork(inputTestCase);
-      }
+      }*/
       double error = 0.0;
       for (int i = 0; i < perceptron.outputNodes; i++)
       {

@@ -100,7 +100,7 @@ public class Perceptron
    {
       int[] inputarr = new int[1];
       double[] inputarr2 = new double[2];
-      inputarr2[0] = 0.0;
+      inputarr2[0] = 1.0;
       inputarr2[1] = 1.0;
       inputarr[0] = 2;
       Perceptron testNetwork = new Perceptron(2, inputarr, 1, "/Users/mihir/IdeaProjects/Neural Networks/Java XOR " +
@@ -121,30 +121,41 @@ public class Perceptron
     */
    public void runNetwork(double[] inputs)
    {
-      for (int i = 0; i < inputs.length; i++)
+      for (int n = 0; n < inputs.length; n++)
       {
-         activations[i][0] = inputs[i];                  // Read inputs and modify input activations
+         activations[n][0] = inputs[n];                  // Read inputs and modify input activations
       }
 
-      for (int columns = 0; columns < activations[0].length; columns++)
+      for (int n = 1; n < maxNumberNodes; n++)
+      {
+         for (int source = 0; source < maxNumberNodes; source++) // source is the second index of the weights, either k or j
+         {
+            for (int dest = 0; dest < maxNumberNodes; dest++)    // dest is the third index of the weights, either j or i
+            {
+               activations[n][source] += thresholdFunction(activations[n - 1][source] * weights[n - 1][source][dest]);
+            }
+         }
+      }
+      
+
+     /* for (int k = 0; k < activations[0].length; k++)
       {
          for (int row = 0; row < activations.length; row++)
          {
-            if (columns == 0)
+            if (k == 0)
             {
-               activations[row][columns] = inputs[row];
+               activations[row][k] = inputs[row];
             }
             else
             {
                for (int i = 0; i < activations.length; i++)
                {
-                  activations[row][columns] +=
-                        (activations[i][columns - 1] *
-                              weights[columns - 1][i][row]); // m will always be n - 1 in this case
+                  activations[row][k] +=
+                        thresholdFunction(activations[i][k - 1] * weights[k - 1][i][row]); // m will always be n - 1 in this case
                }
             }
          }
-      }
+      }*/
    }
 
    /**
@@ -164,8 +175,8 @@ public class Perceptron
    /**
     * Method fDeriv finds the derivative of the threshold function.
     *
-    * @param input
-    * @return
+    * @param input The result of the dot product
+    * @return a double value of the derivative of the threshold function at the input.
     */
    double fDeriv(double input)
    {
