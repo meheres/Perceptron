@@ -8,17 +8,18 @@ public class Trainer
 {
    Perceptron perceptron;
    String inputFile;
-   static double MINIMUM_ERROR;
+   static final double MINIMUM_ERROR = 0.01;
    double[][] testCases;
-   int inputTestCase;
-   int counter;  // Counter checks the number of steps and provides the current test case (counter % testCases.length)
-   double[][] truths;   // A truth is an expected output.
+   int counter;                       // Counter checks the number of steps and provides the current test case (counter %
+                                      // testCases.length)
 
-   double lambda;
+   double[][] truths;                 // A truth is an expected output.
+
+   double lambda;                     // Training function
    double currError;
    double previousError;
-   double[][][] oldWeights;
-   double[][][] currWeights;
+   double[][][] optimizedWeights;           // Optimized thus far
+   double[][][] experimentalWeights;          // Experimental, could be optimal, may not be
 
    int inputNodes;                    // The number of nodes in the input activation layer.
    int[] hiddenLayerNodes;            // The number of nodes in each hidden activation layer.
@@ -40,7 +41,7 @@ public class Trainer
 
       perceptron = new Perceptron(2, new int[]{2}, 1, inputFile);
 
-      this.oldWeights = new double[perceptron.weights.length]            // Create the currentWeights, copying the
+      this.optimizedWeights = new double[perceptron.weights.length]            // Create the currentWeights, copying the
             [perceptron.weights[0].length]         // values from the perceptron's set of
             [perceptron.weights[0][0].length];     // weights the first time.
 
@@ -50,22 +51,21 @@ public class Trainer
          {
             for (int k = 0; k < perceptron.weights[0][0].length; k++)
             {
-               this.oldWeights[i][j][k] = 1.0 * (Math.random());
+               this.optimizedWeights[i][j][k] = 1.0 * (Math.random());
             }
          }
       }
 
-      this.currWeights = new double[perceptron.weights.length]
+      this.experimentalWeights = new double[perceptron.weights.length]
             [perceptron.weights[0].length]
             [perceptron.weights[0][0].length];
       for (int i = 0; i < perceptron.weights.length; i++)
       {
          for (int j = 0; j < perceptron.weights[0].length; j++)
          {
-            System.arraycopy(this.oldWeights[i][j], 0, this.currWeights[i][j], 0, perceptron.weights[0][0].length);
+            System.arraycopy(this.optimizedWeights[i][j], 0, this.experimentalWeights[i][j], 0, perceptron.weights[0][0].length);
          }
       }
-      System.out.println("debug");           //TODO: REMOVE
    }
 
    /**
@@ -100,12 +100,12 @@ public class Trainer
             testCases[i] = new double[inputNodes];
             for (int j = 0; j < inputNodes; j++)
             {
-               testCases[i][j] = Integer.parseInt(stringTokenizer.nextToken());
+               testCases[i][j] = Double.parseDouble(stringTokenizer.nextToken());
             }
             truths[i] = new double[outputNodes];
             for (int j = 0; j < outputNodes; j++)
             {
-               truths[i][j] = Integer.parseInt(stringTokenizer.nextToken());
+               truths[i][j] = Double.parseDouble(stringTokenizer.nextToken());
             }
          } // Iterating over the number of test cases
       } // Reads the input file.
@@ -152,7 +152,7 @@ public class Trainer
     */
    void train()
    {
-      while (currError > 0.01 && currError != previousError && counter < 1000)
+      while (currError > MINIMUM_ERROR && currError != previousError && counter < 1000)
       {
          step();
          counter++;
@@ -167,31 +167,34 @@ public class Trainer
    public void step()
    {
       double[][][] currPartialWeights = this.getCurrPartialWeights();
-      copyWeights(currWeights, oldWeights);
-      for (int i = 0; i < currWeights.length; i++)
+      copyWeights(experimentalWeights, optimizedWeights);
+      for (int i = 0; i < experimentalWeights.length; i++)
       {
-         for (int j = 0; j < currWeights[0].length; j++)
+         for (int j = 0; j < experimentalWeights[0].length; j++)
          {
-            for (int k = 0; k < currWeights[0][0].length; k++)
+            for (int k = 0; k < experimentalWeights[0][0].length; k++)
             {
-               currWeights[i][j][k] += -(lambda * currPartialWeights[i][j][k]); // Updates currWeights to new weights
+               experimentalWeights[i][j][k] += -(lambda * currPartialWeights[i][j][k]); // Updates currWeights to new weights
             }
          }
       }
 
-      perceptron.setWeights(currWeights);
+      // double[][][] lambdasChoice = adaptLambda();  FUTURE WORK
+
+      perceptron.setWeights(experimentalWeights);
       perceptron.runNetwork(testCases[counter % testCases.length]);
 
-      double newError = findTotalError();
-      if (newError > currError)
+      double newError = findTotalError();  //TODO: ensure that findTotalError works correctly.
+
+      /*if (newError > currError)
       {
-         perceptron.setWeights(oldWeights);
-         copyWeights(oldWeights, currWeights);
+         perceptron.setWeights(optimizedWeights);
+         copyWeights(optimizedWeights, experimentalWeights);
       }
       else
       {
-         perceptron.setWeights(currWeights);
-      }
+         perceptron.setWeights(experimentalWeights);
+      }*/
    }
 
    /**
@@ -202,7 +205,7 @@ public class Trainer
     */
    public double[][][] getCurrPartialWeights()
    {
-      double[][][] totalPartialWeights = new double[currWeights.length][currWeights[0].length][currWeights[0][0].length];
+      double[][][] totalPartialWeights = new double[experimentalWeights.length][experimentalWeights[0].length][experimentalWeights[0][0].length];
 
       perceptron.runNetwork(testCases[counter % testCases.length]);
       double[][][] partialsOfNetworkWeights = perceptron.findPartials();
@@ -266,13 +269,13 @@ public class Trainer
 
    public void updateWeights()
    {
-      for (int i = 0; i < currWeights.length; i++)
+      for (int i = 0; i < experimentalWeights.length; i++)
       {
-         for (int j = 0; j < currWeights[0].length; j++)
+         for (int j = 0; j < experimentalWeights[0].length; j++)
          {
-            for (int k = 0; k < currWeights[0][0].length; k++)
+            for (int k = 0; k < experimentalWeights[0][0].length; k++)
             {
-               currWeights[i][j][k] = oldWeights[i][j][k];
+               experimentalWeights[i][j][k] = optimizedWeights[i][j][k];
             }
          }
       }

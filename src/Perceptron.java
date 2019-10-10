@@ -31,27 +31,27 @@ public class Perceptron
 
    BufferedReader bufferedReader;     // bufferedReader is for the input file. It allows for quick line-by-line reading of the file.
    StringTokenizer stringTokenizer;   // stringTokenizer reads each line provided by the BufferedReader, allowing for
-   // token-by-token reading.
+                                      // token-by-token reading.
 
    int numberActivationLayers;        // The number of connectivity layers will be one less than the number of activation layers.
-   // The number of activation layers will be 2 more than the number of hidden layers, one for
-   // input activations and one for output activations.
+                                      // The number of activation layers will be 2 more than the number of hidden layers, one for
+                                      // input activations and one for output activations.
 
    double[] inputs;                   // An Array that holds the values for the input activations. Read in first line of input
-   // file.
+                                      // file.
 
    double[] expectedOutputs;          // An Array that holds the values for the expected outputs, for comparison with the actual
-   // outputs.
+                                      // outputs.
 
    double[][] activations;            // A 2D Array that represents the different activation layers. First index will be the
-   // number of activation layers, and the second index will specify which node from the
-   // activation layer to use.
+                                      // number of activation layers, and the second index will specify which node from the
+                                      // activation layer to use.
 
    public double[][][] weights;       // A 3D Array that represents the connectivity layers.
 
 
    /**
-    * SimpleNet is the constructor for the neural network. It creates the activation layers and connectivity layers for the
+    * Perceptron is the constructor for the neural network. It creates the activation layers and connectivity layers for the
     * network. The constructor also determines the most number of nodes by iterating over all of the activation layers.
     *
     * @param inputNodes
@@ -63,14 +63,15 @@ public class Perceptron
       this.inputNodes = inputNodes;
       this.hiddenLayerNodes = hiddenLayerNodes;
       this.outputNodes = outputNodes;
-      this.numberActivationLayers = 2 + hiddenLayerNodes.length;  // add 2 to the number of hidden layers for the total number
-      // of layers (1 input + n hidden + 1 output)
+      this.numberActivationLayers = NUM_COLUMNS + hiddenLayerNodes.length;  // add 2 to the number of hidden layers for the
+                                                                            // total number of layers (1 input + n hidden + 1
+                                                                            // output)
       this.inputs = new double[inputNodes];
       this.expectedOutputs = new double[outputNodes];
       maxNumberNodes = inputNodes;
       for (int i = 0; i < hiddenLayerNodes.length; i++)
       {
-         maxNumberNodes = Math.max(maxNumberNodes, hiddenLayerNodes[i]);
+         maxNumberNodes = Math.max(maxNumberNodes, hiddenLayerNodes[i]);    // Determined for building the activations
       }
       maxNumberNodes = Math.max(maxNumberNodes, outputNodes);
 
@@ -97,8 +98,8 @@ public class Perceptron
    {
       int[] inputarr = new int[1];
       double[] inputarr2 = new double[2];
-      inputarr2[0] = 0.0;
-      inputarr2[1] = 1.0;
+      inputarr2[0] = 1.0;
+      inputarr2[1] = 0.0;
       inputarr[0] = 2;
 
       double[][][] testWeights;
@@ -137,36 +138,16 @@ public class Perceptron
          activations[0][source] = inputs[source]; // Read inputs & modify input activations, 0 hardcoded for input activation layer
       }
 
-      for (int n = 1; n < maxNumberNodes; n++)
+      for (int n = 1; n < activations.length; n++)
       {
-         for (int source = 0; source < maxNumberNodes; source++) // source is the second index of the weights, either k or j
+         for (int dest = 0; dest < activations[0].length; dest++) // source is the second index of the weights, either k or j
          {
-            for (int dest = 0; dest < maxNumberNodes; dest++)    // dest is the third index of the weights, either j or i
+            for (int source = 0; source < activations[0].length; source++)    // dest is the third index of the weights, either j or i
             {
-               activations[n][source] += thresholdFunction(activations[n - 1][source] * weights[n - 1][source][dest]);
+               activations[n][dest] += thresholdFunction(activations[n - 1][source] * weights[n - 1][source][dest]);
             }
          }
       }
-      
-
-     /* for (int k = 0; k < activations[0].length; k++)
-      {
-         for (int row = 0; row < activations.length; row++)
-         {
-            if (k == 0)
-            {
-               activations[row][k] = inputs[row];
-            }
-            else
-            {
-               for (int i = 0; i < activations.length; i++)
-               {
-                  activations[row][k] +=
-                        thresholdFunction(activations[i][k - 1] * weights[k - 1][i][row]); // m will always be n - 1 in this case
-               }
-            }
-         }
-      }*/
    }
 
    /**
@@ -180,8 +161,7 @@ public class Perceptron
     */
    double thresholdFunction(double dotProductResult)
    {
-      return dotProductResult;
-            // 1 / (1 + Math.exp(-dotProductResult));
+      return 1 / (1 + Math.exp(-dotProductResult));
    }
 
    /**
@@ -271,4 +251,10 @@ public class Perceptron
    {
       this.weights = weights;
    }
+
+   public double caculateError (double truthValue)
+   {
+      return -1.1;
+   }
+
 }
