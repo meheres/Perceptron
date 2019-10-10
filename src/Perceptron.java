@@ -22,9 +22,6 @@ import java.util.StringTokenizer;
  */
 public class Perceptron
 {
-
-   int numTrials;                     // The number of trials to be run.
-   int minimumError;                  // The minimum error for training.
    int inputNodes;                    // The number of nodes in the input activation layer.
    int[] hiddenLayerNodes;            // The number of nodes in each hidden activation layer.
    int outputNodes;                   // The number of nodes in the output activation layer.
@@ -79,7 +76,7 @@ public class Perceptron
 
       // the first index of the activationLayers represents the number of nodes in the layer (limited by the maximum number of
       // nodes in the neural network, while the second index is the number of activation layers.
-      activations = new double[maxNumberNodes][numberActivationLayers];
+      activations = new double[numberActivationLayers][maxNumberNodes];
       // the first index of the connectivity layer represents the
       weights = new double[numberActivationLayers - 1]
                           [numberActivationLayers - 1]
@@ -100,12 +97,26 @@ public class Perceptron
    {
       int[] inputarr = new int[1];
       double[] inputarr2 = new double[2];
-      inputarr2[0] = 1.0;
+      inputarr2[0] = 0.0;
       inputarr2[1] = 1.0;
       inputarr[0] = 2;
+
+      double[][][] testWeights;
+      testWeights =
+            new double[][][] {
+               new double[][] {
+                     new double[] {1.44, 0.49},
+                     new double[] {1.25, 0.05}
+               },
+               new double[][] {
+                     new double[] {0.22, 0.0},
+                     new double[] {0.11, 0.0}
+               }
+            };
       Perceptron testNetwork = new Perceptron(2, inputarr, 1, "/Users/mihir/IdeaProjects/Neural Networks/Java XOR " +
             "Implementation/src/inputs/inputFile11.txt");
       testNetwork.randomizeWeights();
+      testNetwork.setWeights(testWeights);
       testNetwork.runNetwork(inputarr2);
       testNetwork.printResult();
    }
@@ -121,9 +132,9 @@ public class Perceptron
     */
    public void runNetwork(double[] inputs)
    {
-      for (int n = 0; n < inputs.length; n++)
+      for (int source = 0; source < inputs.length; source++)
       {
-         activations[n][0] = inputs[n];                  // Read inputs and modify input activations
+         activations[0][source] = inputs[source]; // Read inputs & modify input activations, 0 hardcoded for input activation layer
       }
 
       for (int n = 1; n < maxNumberNodes; n++)
@@ -169,7 +180,8 @@ public class Perceptron
     */
    double thresholdFunction(double dotProductResult)
    {
-      return 1 / (1 + Math.exp(-dotProductResult));
+      return dotProductResult;
+            // 1 / (1 + Math.exp(-dotProductResult));
    }
 
    /**
@@ -247,7 +259,7 @@ public class Perceptron
 
    void printResult()
    {
-      System.out.println("Perceptron's result: " + activations[0][activations[0].length - 1]);
+      System.out.println("Perceptron's result: " + activations[activations.length - 1][0]);
    }
 
    /**
