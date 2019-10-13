@@ -196,41 +196,42 @@ public class Perceptron
    /**
     * Find the partial derivatives for the gradient descent, then add them to the trial set of weights.
     */
-   public double[][][] findPartials()
+   public double[][][] findPartials(double truthValue)
    {
       double[][][] partials = new double[maxNumberNodes][maxNumberNodes][maxNumberNodes];
 
-
-      double outputResult = activations[0][activations[0].length - 1];
-      double error = expectedOutputs[0] - outputResult;
-
-      for (int j = 0; j < inputs.length; j++)                                   // For one training case.
+      double outputResult = activations[activations.length - 1][0];
+      double error = truthValue - outputResult;
+      for (int j = 0; j < activations[0].length; j++)                                   // For one single output node.
       {
          double sumHColumn = 0.0;
          for (int J = 0; J < activations[0].length - 1; J++)
          {
-            sumHColumn += activations[J][1] * weights[1][J][0];
+            sumHColumn += activations[1][J] * weights[1][J][0];
          }
 
-         double finalDeriv = -fDeriv(sumHColumn) * error * activations[j][1];   // Partial for W_{j0}
-         partials[1][j][0] = finalDeriv;
+         double singleOutputPartial = -1.0 * error * fDeriv(sumHColumn) * activations[1][j];   // Partial for W_{j0}
+         partials[1][j][0] = singleOutputPartial;
       }
 
-      for (int k = 0; k < maxNumberNodes; k++)
+      for (int k = 0; k < maxNumberNodes; k++)  // iterate over source nodes
       {
-         for (int j = 0; j < maxNumberNodes; j++)
+         for (int j = 0; j < maxNumberNodes; j++)  // iterate over destination nodes
          {
             double sumAColumn = 0;
-            double sumHColumn = 0.0;
-            for (int K = 0; K < activations.length; K++)
+            for (int K = 0; K < activations[0].length; K++)
             {
-               sumAColumn += activations[K][0] * weights[0][K][j];
-               sumHColumn += activations[K][1] * weights[1][K][0];
+               sumAColumn += activations[0][K] * weights[0][K][j]; // First column
+            }
+
+            double sumHColumn = 0.0;
+            for (int J = 0; J < activations[0].length; J++)
+            {
+               sumHColumn += activations[1][J] * weights[1][J][0]; // Second column
             }
 
             double finalDeriv =
-                  -activations[k][0] * fDeriv(sumAColumn) * error * fDeriv(sumHColumn) * weights[0][k][j];
-
+                  -1.0 * activations[0][k] * fDeriv(sumAColumn) * error * fDeriv(sumHColumn) * weights[1][j][0];
             partials[0][k][j] = finalDeriv;
          }
       }
@@ -245,16 +246,45 @@ public class Perceptron
    /**
     * Setter function for the weights variable.
     *
-    * @param weights The new weights to replace the original ones.
+    * @param newWeights The new weights to replace the original ones.
     */
-   public void setWeights(double[][][] weights)
+   public void setWeights(double[][][] newWeights)
    {
-      this.weights = weights;
+      for (int i = 0; i < this.weights.length; i++)
+      {
+         for (int j = 0; j < this.weights[0].length; j++)
+         {
+            System.arraycopy(newWeights[i][j], 0, weights[i][j], 0, this.weights[0][0].length);
+         }
+      }
+      print2x2x2Array(weights, newWeights);
    }
 
-   public double caculateError (double truthValue)
+   public void print2x2x2Array(double[][][] weights, double[][][] newWeights)
    {
-      return -1.1;
+      for (int n = 0; n < 2; n++)
+      {
+         for (int source = 0; source < 2; source++)
+         {
+            for (int dest = 0; dest < 2; dest++)
+            {
+               System.out.println("Weight diff: " + (newWeights[n][source][dest] - weights[n][source][dest]));
+            }
+         }
+      }
+   }
+
+   /**
+    * Calculate error calculates the perceptron's error in relation to a provided truth value, using the formula written in the
+    * design document.
+    *
+    * @param truthValue The truth value, or expected output.
+    * @return A double value for the error.
+    */
+   public double calculateError (double truthValue)
+   {
+      double networkResult = activations[activations.length - 1][0];
+      return 0.5 * (truthValue - networkResult) * (truthValue - networkResult);
    }
 
 }
