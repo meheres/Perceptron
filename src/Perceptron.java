@@ -161,7 +161,7 @@ public class Perceptron
     */
    double thresholdFunction(double dotProductResult)
    {
-      return 1 / (1 + Math.exp(-dotProductResult));
+      return 1.0 / (1.0 + Math.exp(-dotProductResult));
    }
 
    /**
@@ -173,7 +173,7 @@ public class Perceptron
    double fDeriv(double input)
    {
       double thresholdOutput = thresholdFunction(input);
-      return  thresholdOutput * (1 - thresholdOutput);
+      return  thresholdOutput * (1.0 - thresholdOutput);
    }
 
    /**
@@ -201,10 +201,14 @@ public class Perceptron
       double[][][] partials = new double[maxNumberNodes][maxNumberNodes][maxNumberNodes];
 
       double outputResult = activations[activations.length - 1][0];
-      double error = truthValue - outputResult;
+      double error = outputResult - truthValue;
+
+      double sumHColumn = 0.0;
+      double sumAColumn = 0.0;
+
       for (int j = 0; j < activations[0].length; j++)                                   // For one single output node.
       {
-         double sumHColumn = 0.0;
+         sumHColumn = 0.0;
          for (int J = 0; J < activations[0].length - 1; J++)
          {
             sumHColumn += activations[1][J] * weights[1][J][0];
@@ -218,18 +222,11 @@ public class Perceptron
       {
          for (int j = 0; j < maxNumberNodes; j++)  // iterate over destination nodes
          {
-            double sumAColumn = 0;
+            sumAColumn = 0;
             for (int K = 0; K < activations[0].length; K++)
             {
                sumAColumn += activations[0][K] * weights[0][K][j]; // First column
             }
-
-            double sumHColumn = 0.0;
-            for (int J = 0; J < activations[0].length; J++)
-            {
-               sumHColumn += activations[1][J] * weights[1][J][0]; // Second column
-            }
-
             double finalDeriv =
                   -1.0 * activations[0][k] * fDeriv(sumAColumn) * error * fDeriv(sumHColumn) * weights[1][j][0];
             partials[0][k][j] = finalDeriv;
@@ -254,10 +251,12 @@ public class Perceptron
       {
          for (int j = 0; j < this.weights[0].length; j++)
          {
-            System.arraycopy(newWeights[i][j], 0, weights[i][j], 0, this.weights[0][0].length);
+            for (int k = 0; k < this.weights[0][0].length; k++)
+            {
+               weights[i][j][k] = newWeights[i][j][k];
+            }
          }
       }
-      print2x2x2Array(weights, newWeights);
    }
 
    public void print2x2x2Array(double[][][] weights, double[][][] newWeights)
@@ -284,7 +283,7 @@ public class Perceptron
    public double calculateError (double truthValue)
    {
       double networkResult = activations[activations.length - 1][0];
-      return 0.5 * (truthValue - networkResult) * (truthValue - networkResult);
+      return 0.5 * ((truthValue - networkResult) * (truthValue - networkResult));
    }
 
 }

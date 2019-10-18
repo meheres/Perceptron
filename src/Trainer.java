@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.StringTokenizer;
 
 
@@ -59,6 +60,8 @@ public class Trainer
          }
       }
 
+      System.out.println("Original, randomized weights: " + Arrays.deepToString(optimizedWeights));
+
       this.experimentalWeights = new double[perceptron.weights.length]
             [perceptron.weights[0].length]
             [perceptron.weights[0][0].length];
@@ -66,7 +69,10 @@ public class Trainer
       {
          for (int j = 0; j < perceptron.weights[0].length; j++)
          {
-            System.arraycopy(this.optimizedWeights[i][j], 0, this.experimentalWeights[i][j], 0, perceptron.weights[0][0].length);
+            for (int k = 0; k < this.experimentalWeights[0][0].length; k++)
+            {
+               this.experimentalWeights[i][j][k] = optimizedWeights[i][j][k];
+            }
          }
       }
    }
@@ -119,17 +125,36 @@ public class Trainer
    }
 
 
-
    /**
-    * Function copyOldToNew is a helper function to copy the old weights to new ones. Will be used in each step.
+    * Function copyWeights is a helper function to copy the old weights to new ones. Will be used in each step.
     */
-   public void copyWeights(double[][][] oldWeights, double[][][] newWeights)
+   public void copyOptimizedToExperimental()
    {
       for (int i = 0; i < perceptron.weights.length; i++)
       {
          for (int j = 0; j < perceptron.weights[0].length; j++)
          {
-            System.arraycopy(oldWeights[i][j], 0, newWeights[i][j], 0, perceptron.weights[0][0].length);
+            for (int k = 0; k < this.experimentalWeights[0][0].length; k++)
+            {
+               this.experimentalWeights[i][j][k] = this.optimizedWeights[i][j][k];
+            }
+         }
+      }
+   }
+
+   /**
+    * Function copyWeights is a helper function to copy the old weights to new ones. Will be used in each step.
+    */
+   public void copyExperimentalToOptimized()
+   {
+      for (int i = 0; i < perceptron.weights.length; i++)
+      {
+         for (int j = 0; j < perceptron.weights[0].length; j++)
+         {
+            for (int k = 0; k < this.optimizedWeights[0][0].length; k++)
+            {
+               this.optimizedWeights[i][j][k] = this.experimentalWeights[i][j][k];
+            }
          }
       }
    }
@@ -155,6 +180,8 @@ public class Trainer
     */
    void train()
    {
+      perceptron.randomizeWeights();
+
       while (currError > MINIMUM_ERROR && currError != previousError && counter < MAX_STEPS)
       {
          currCase = truths[counter % testCases.length][0];
@@ -163,6 +190,34 @@ public class Trainer
       }
    }
 
+   /**public void step()
+   {
+
+
+
+      newweights :)
+      copyarrays oldweights to new weights :)
+      run network and find output for a test case :)
+      get the partials, add them to delta w with lambda :)
+      rerun network with new weights:)
+      find some error:)
+      that's your new error' :)
+
+      if(newError <= prevError)
+      {
+         prevEroor = new Error
+      }
+      else
+      {
+         if (newError > errorThreshold)
+         {
+            t--;
+            maxError = prevMax;
+         }
+      }
+    }**/
+
+
    /**
     * Function step runs an individual step in the training process. A step is defined as finding the partials, using the error
     * to update the weights of the perceptron, setting weights/running the network, then deciding whether or not to use the
@@ -170,37 +225,48 @@ public class Trainer
     */
    public void step()
    {
+      perceptron.setWeights(optimizedWeights);
+      perceptron.runNetwork(testCases[counter % testCases.length]); // Train current perceptron
+      double trainedResult = perceptron.activations[perceptron.activations.length - 1][0];
+
       double[][][] currPartialWeights = perceptron.findPartials(currCase);
-      copyWeights(experimentalWeights, optimizedWeights);
+      copyExperimentalToOptimized();
+      System.out.println("Old Array: " + Arrays.deepToString(optimizedWeights));
+      System.out.println("Partials : " + Arrays.deepToString(currPartialWeights));
       for (int i = 0; i < experimentalWeights.length; i++)
       {
          for (int j = 0; j < experimentalWeights[0].length; j++)
          {
             for (int k = 0; k < experimentalWeights[0][0].length; k++)
             {
-               experimentalWeights[i][j][k] += -1.0 * lambda * currPartialWeights[i][j][k]; // Updates currWeights to new weights
+               experimentalWeights[i][j][k] += lambda * currPartialWeights[i][j][k]; // Updates currWeights to new weights
             }
          }
       }
+      System.out.println("New Array: " + Arrays.deepToString(experimentalWeights));
+      // double[][][] lambdasChoice = adaptLambda();  TODO: FUTURE WORK ON ADAPTIVE LAMBDA
 
-      // double[][][] lambdasChoice = adaptLambda();  TODO:FUTURE WORK
-
-      perceptron.setWeights(experimentalWeights);
+     // perceptron.setWeights(experimentalWeights);
       perceptron.runNetwork(testCases[counter % testCases.length]);
       perceptron.printResult();
 
       double newError = perceptron.calculateError(truths[counter % testCases.length][0]);
-      System.out.println("Error: " + newError);
+      previousError = currError;
+      currError = newError;
+      System.out.println("Previous Error: " + previousError);
+      System.out.println("New Error: " + currError);
+      System.out.println();
 
-      /*if (newError > currError)
+      if (currError > previousError)
       {
          perceptron.setWeights(optimizedWeights);
-         copyWeights(optimizedWeights, experimentalWeights);
+         copyOptimizedToExperimental();
       }
       else
       {
          perceptron.setWeights(experimentalWeights);
-      }*/
+         copyExperimentalToOptimized();
+      }
    }
 
 
