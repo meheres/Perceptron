@@ -261,7 +261,7 @@ public class Net
             double[][][] weightst = copyWeights();    // 3D array to keep track of the changes in the weights.
 
             //System.out.println("error " + error);
-           
+
            /*
            if (Math.abs(error) > Math.abs(trained[0]))
               lambda /= LAMBDA_FACTOR;

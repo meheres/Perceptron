@@ -154,14 +154,14 @@ public class Perceptron
     * Method thresholdFunction limits the output of the dot product in the runNetwork method. Currently, it limits the
     * dot product with a sigmoid function.
     *
-    * @param dotProductResult The dotProductsResult parameter is the output of the dot product between the two vectors, as
+    * @param x The dotProductsResult parameter is the output of the dot product between the two vectors, as
     *                         explained in the documentation for runNetwork. It will be limited by the threshold function.
     * @return The threshold function will return the limited dot product result. Currently, the function returns exactly what it
     * is given, and simply serves as a placeholder for future updates.
     */
-   double thresholdFunction(double dotProductResult)
+   double thresholdFunction(double x)
    {
-      return 1.0 / (1.0 + Math.exp(-dotProductResult));
+      return 1.0 / (1.0 + Math.exp(-x));
    }
 
    /**
@@ -201,7 +201,7 @@ public class Perceptron
       double[][][] partials = new double[maxNumberNodes][maxNumberNodes][maxNumberNodes];
 
       double outputResult = activations[activations.length - 1][0];
-      double error = outputResult - truthValue;
+      double error = truthValue - outputResult;
 
       double sumHColumn = 0.0;
       double sumAColumn = 0.0;
@@ -211,7 +211,7 @@ public class Perceptron
          sumHColumn = 0.0;
          for (int J = 0; J < activations[0].length - 1; J++)
          {
-            sumHColumn += activations[1][J] * weights[1][J][0];
+            sumHColumn += (activations[1][J] * weights[1][J][0]);
          }
 
          double singleOutputPartial = -1.0 * error * fDeriv(sumHColumn) * activations[1][j];   // Partial for W_{j0}
@@ -227,9 +227,9 @@ public class Perceptron
             {
                sumAColumn += activations[0][K] * weights[0][K][j]; // First column
             }
-            double finalDeriv =
+            double multiOutputPartial =
                   -1.0 * activations[0][k] * fDeriv(sumAColumn) * error * fDeriv(sumHColumn) * weights[1][j][0];
-            partials[0][k][j] = finalDeriv;
+            partials[0][k][j] = multiOutputPartial;
          }
       }
       return partials;
@@ -259,20 +259,6 @@ public class Perceptron
       }
    }
 
-   public void print2x2x2Array(double[][][] weights, double[][][] newWeights)
-   {
-      for (int n = 0; n < 2; n++)
-      {
-         for (int source = 0; source < 2; source++)
-         {
-            for (int dest = 0; dest < 2; dest++)
-            {
-               System.out.println("Weight diff: " + (newWeights[n][source][dest] - weights[n][source][dest]));
-            }
-         }
-      }
-   }
-
    /**
     * Calculate error calculates the perceptron's error in relation to a provided truth value, using the formula written in the
     * design document.
@@ -280,10 +266,9 @@ public class Perceptron
     * @param truthValue The truth value, or expected output.
     * @return A double value for the error.
     */
-   public double calculateError (double truthValue)
+   public double calculateError (double truthValue, double networkOutput)
    {
-      double networkResult = activations[activations.length - 1][0];
-      return 0.5 * ((truthValue - networkResult) * (truthValue - networkResult));
+      return (truthValue - networkOutput) * (truthValue - networkOutput);
    }
 
 }
