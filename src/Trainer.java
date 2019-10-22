@@ -1,3 +1,5 @@
+import jdk.swing.interop.SwingInterOpUtils;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -10,7 +12,7 @@ public class Trainer
    Perceptron perceptron;
    String inputFile;
    static final double MINIMUM_ERROR = 0.01;
-   static final int MAX_STEPS = 10000;
+   static final int MAX_STEPS = 100;
    double[][] testCases;
    double currCase;
    int counter;                               // Counter checks the number of steps and provides the current test case (counter %
@@ -20,7 +22,6 @@ public class Trainer
 
    double lambda;                             // Training function
    double currError;
-   double previousError;
 
    int inputNodes;                            // The number of nodes in the input activation layer.
    int[] hiddenLayerNodes;                    // The number of nodes in each hidden activation layer.
@@ -36,7 +37,6 @@ public class Trainer
       this.inputFile = inputFile;
       readInputFile();
       this.currError = Double.MAX_VALUE - 1.0;                                // Current error starts as larger as possible
-      this.previousError = Double.MIN_VALUE;                                  // Previous error needs to be different from current
       this.lambda = 0.5;
       this.counter = 0;
       perceptron = new Perceptron(2, new int[]{2}, 1, inputFile);
@@ -114,10 +114,14 @@ public class Trainer
    {
       perceptron.randomizeWeights();
 
-      while (currError > MINIMUM_ERROR && currError != previousError && counter < MAX_STEPS)
+      while ((currError > MINIMUM_ERROR && counter < MAX_STEPS))
       {
          currCase = truths[counter % testCases.length][0];
-         System.out.println("Current test case: " + currCase); //TODO: REMOVE DEBUG STATEMENT
+         double testCase1 = testCases[counter % testCases.length][0];
+         double testCase2 = testCases[counter % testCases.length][1];
+         System.out.println("Current test case:\nTruth: " + currCase + "\nInputs: " + testCase1 + " " + testCase2); //TODO: REMOVE
+         // DEBUG
+         // STATEMENT
          step();
          counter++;
          System.out.println("Counter: "+ counter + "\nCounter % #testcases: " + counter % testCases.length); //TODO: REMOVE DEBUG STATEMENT
@@ -157,14 +161,11 @@ public class Trainer
       System.out.print("Post-updated result: ");
       perceptron.printResult();
 
-      double newError = perceptron.calculateError(truths[counter % testCases.length][0], trainedResult);
-      previousError = currError;
-      currError = newError;
-      System.out.println("Previous Error: " + previousError); //TODO: REMOVE DEBUG STATEMENT
-      System.out.println("New Error: " + currError); //TODO: REMOVE DEBUG STATEMENT
-      System.out.println(); //TODO: REMOVE DEBUG STATEMENT
+      double newError = 0.5 * perceptron.calculateError(truths[counter % testCases.length][0], trainedResult);
+      System.out.println("Current Error: " + currError);
+      System.out.println("New Error: " + newError + "\n"); //TODO: REMOVE DEBUG STATEMENT
 
-      if(previousError < currError)
+      /*if(newError > currError)
       {
          for (int i = 0; i < currPartialWeights.length; i++)
          {
@@ -176,8 +177,16 @@ public class Trainer
                }
             }
          }
+         System.out.println("New error greater than current error, terminating");
+         System.out.println("New error: " + newError + "\nCurrent error: " + currError);
+         newError = currError;
+         counter = MAX_STEPS + 1;
       }
-      currError = previousError;
+      else
+      {
+         currError = newError;
+      }*/
+      currError = newError;
    }
 
 
