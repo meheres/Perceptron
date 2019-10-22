@@ -38,7 +38,7 @@ public class Perceptron
                                       // input activations and one for output activations.
 
    double[] inputs;                   // An Array that holds the values for the input activations. Read in first line of input
-                                      // file.
+                                      // file. 
 
    double[] expectedOutputs;          // An Array that holds the values for the expected outputs, for comparison with the actual
                                       // outputs.
@@ -68,20 +68,39 @@ public class Perceptron
                                                                             // output)
       this.inputs = new double[inputNodes];
       this.expectedOutputs = new double[outputNodes];
-      maxNumberNodes = inputNodes;
-      for (int i = 0; i < hiddenLayerNodes.length; i++)
-      {
-         maxNumberNodes = Math.max(maxNumberNodes, hiddenLayerNodes[i]);    // Determined for building the activations
-      }
-      maxNumberNodes = Math.max(maxNumberNodes, outputNodes);
+      // maxNumberNodes = inputNodes;
+      // for (int i = 0; i < hiddenLayerNodes.length; i++)
+      // {
+      //    maxNumberNodes = Math.max(maxNumberNodes, hiddenLayerNodes[i]);    // Determined for building the activations
+      // }
+      // maxNumberNodes = Math.max(maxNumberNodes, outputNodes);
 
       // the first index of the activationLayers represents the number of nodes in the layer (limited by the maximum number of
       // nodes in the neural network, while the second index is the number of activation layers.
-      activations = new double[numberActivationLayers][maxNumberNodes];
+      // ** activations = new double[numberActivationLayers][maxNumberNodes]; // ** Should there be -1 for each
+
+      // Initialize 2D activations array representing input layer, hidden layers and output layer
+      // Note: activations[][] will be a jagged array
+      activations = new double[NUM_COLUMNS + hiddenLayerNodes.length][];
+      activations[0] = new double[inputNodes]; // First initialize the input layer
+      for (int i = 0; i < hiddenLayerNodes.length; i++) // Next initialize the hidden layers
+      {
+        activations[i + 1] = new double[hiddenLayerNodes[i]];
+      }
+      activations[hiddenLayerNodes.length + NUM_COLUMNS - 1] = new double[outputNodes]; // Finally initialize the output layer
+
       // the first index of the connectivity layer represents the
-      weights = new double[numberActivationLayers - 1]
-                          [numberActivationLayers - 1]
-                          [numberActivationLayers - 1];
+      // weights[][][] is a 3D jagged array representing weights between each of the layers, W_mkj
+      // where, m represents the input layer, k represents source layer and j represents the destination layer
+      // Initialize 3D jagged array
+      weights = new double[activations.length - 1][][]; // In an N layer network, N-1 weight layers
+      for (int m = 0; m < activations.length - 1; m++) 
+      {
+        weights[m] = new double[activations[m].length][activations[m+1].length];
+      }
+      // weights = new double[numberActivationLayers - 1]
+      //                     [numberActivationLayers - 1] // ** Should be maxNumberNodes -1 ; actually, this needs to be dynamic hiddenLayerNodes[].length
+      //                     [numberActivationLayers - 1]; // ** Should be maxNumberNodes -1 ; actually, this needs to be dynamic
    }
 
 
@@ -140,12 +159,13 @@ public class Perceptron
 
       for (int n = 1; n < activations.length; n++)
       {
-         for (int dest = 0; dest < activations[0].length; dest++) // source is the second index of the weights, either k or j
-         {
-            for (int source = 0; source < activations[0].length; source++)    // dest is the third index of the weights, either j or i
+         for (int dest = 0; dest < activations[n].length; dest++) // source is the second index of the weights, either k or j
+         { 
+            for (int source = 0; source < activations[n - 1].length; source++)    // dest is the third index of the weights, either j or i
             {
-               activations[n][dest] += thresholdFunction(activations[n - 1][source] * weights[n - 1][source][dest]);
+               activations[n][dest] += activations[n - 1][source] * weights[n - 1][source][dest];
             }
+	     activations[n][dest] += thresholdFunction(activations[n][dest]);
          }
       }
    }
@@ -183,11 +203,11 @@ public class Perceptron
    {
       for (int i = 0; i < weights.length; i++)
       {
-         for (int j = 0; j < weights[0].length; j++)
+         for (int j = 0; j < weights[i].length; j++)
          {
-            for (int k = 0; k < weights[0][0].length; k++)
+            for (int k = 0; k < weights[i][j].length; k++)
             {
-               weights[i][j][k] = 1.0 * (Math.random());
+               weights[i][j][k] = 1.0 * (Math.random()); 
             }
          }
       }
@@ -196,31 +216,39 @@ public class Perceptron
    /**
     * Find the partial derivatives for the gradient descent, then add them to the trial set of weights.
     */
-   public double[][][] findPartials(double truthValue)
+   public double[][][] findPartials(double truthValue) // Assume a single node output layer
    {
-      double[][][] partials = new double[maxNumberNodes][maxNumberNodes][maxNumberNodes];
+      // Initialize 3D jagged array by mirroring weights[][][]
+      double[][][] partials = new double[weights.length][][];
+      for (int m = 0; m < weights.length; m++) 
+      {
+        for (int i = 0; i < weights[m].length; i++) 
+	{
+          partials[m] = new double[weights[m].length][weights[m][i].length];
+	}
+      }
 
-      double outputResult = activations[activations.length - 1][0];
-      double error = truthValue - outputResult;
+      double outputResult = activations[activations.length - 1][0]; // Assume one output only
+      double error = truthValue - outputResult; // Assume one output. Otherwise error is a summation over indices
 
       double sumHColumn = 0.0;
       double sumAColumn = 0.0;
 
-      for (int j = 0; j < activations[0].length; j++)                                   // For one single output node.
+      for (int j = 0; j < weights[weights.length-1].length; j++)  // For each element in W_*j0 where * is the last column (For one single output node)
       {
          sumHColumn = 0.0;
-         for (int J = 0; J < activations[0].length - 1; J++)
+         for (int J = 0; J < activations[activations.length-2].length; J++) // Sum over all elements in H column (one before the output). Same as weights[weights.length-1].length-1
          {
-            sumHColumn += (activations[1][J] * weights[1][J][0]);
+            sumHColumn += (activations[activations.length-2][J] * weights[weights.length-1][J][0]);
          }
 
-         double singleOutputPartial = -1.0 * error * fDeriv(sumHColumn) * activations[1][j];   // Partial for W_{j0}
-         partials[1][j][0] = singleOutputPartial;
+         double singleOutputPartial = -1.0 * error * fDeriv(sumHColumn) * activations[activations.length-2][j];   // Partial for W_{j0}
+         partials[weights.length-1][j][0] = singleOutputPartial;
       }
 
-      for (int k = 0; k < maxNumberNodes; k++)  // iterate over source nodes
+      for (int k = 0; k < weights[0].length; k++)  // iterate over source nodes, OR, activations[0].length
       {
-         for (int j = 0; j < maxNumberNodes; j++)  // iterate over destination nodes
+         for (int j = 0; j < weights[0][k].length; j++)  // iterate over destination nodes, OR, activations[1].length
          {
             sumAColumn = 0;
             for (int K = 0; K < activations[0].length; K++)
@@ -228,7 +256,7 @@ public class Perceptron
                sumAColumn += activations[0][K] * weights[0][K][j]; // First column
             }
             double multiOutputPartial =
-                  -1.0 * activations[0][k] * fDeriv(sumAColumn) * error * fDeriv(sumHColumn) * weights[1][j][0];
+                  -1.0 * activations[0][k] * fDeriv(sumAColumn) * error * fDeriv(sumHColumn) * weights[weights.length-1][j][0];
             partials[0][k][j] = multiOutputPartial;
          }
       }
@@ -247,11 +275,12 @@ public class Perceptron
     */
    public void setWeights(double[][][] newWeights)
    {
+	   // ** See previous comment in randomize weights
       for (int i = 0; i < this.weights.length; i++)
       {
-         for (int j = 0; j < this.weights[0].length; j++)
+         for (int j = 0; j < this.weights[i].length; j++)
          {
-            for (int k = 0; k < this.weights[0][0].length; k++)
+            for (int k = 0; k < this.weights[i][j].length; k++)
             {
                weights[i][j][k] = newWeights[i][j][k];
             }
@@ -267,8 +296,9 @@ public class Perceptron
     * @return A double value for the error.
     */
    public double calculateError (double truthValue, double networkOutput)
+	   // ** Needs array and loop
    {
-      return (truthValue - networkOutput) * (truthValue - networkOutput);
+      return (truthValue - networkOutput) * (truthValue - networkOutput); // ** Needs a 1/2
    }
 
 }
