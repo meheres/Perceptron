@@ -1,3 +1,5 @@
+package org.neuralnet;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -10,9 +12,8 @@ public class Trainer
    Perceptron perceptron;
    String inputFile;
    static final double MINIMUM_ERROR = 0.01;
-   static final int MAX_STEPS = 10000;
+   static final int MAX_STEPS = 100;
    double[][] testCases;
-   double currCase;
    int counter;                               // Counter checks the number of steps and provides the current test case (counter %
                                               // testCases.length)
 
@@ -20,7 +21,6 @@ public class Trainer
 
    double lambda;                             // Training function
    double currError;
-   double previousError;
 
    int inputNodes;                            // The number of nodes in the input activation layer.
    int[] hiddenLayerNodes;                    // The number of nodes in each hidden activation layer.
@@ -36,12 +36,22 @@ public class Trainer
       this.inputFile = inputFile;
       readInputFile();
       this.currError = Double.MAX_VALUE - 1.0;                                // Current error starts as larger as possible
-      this.previousError = Double.MIN_VALUE;                                  // Previous error needs to be different from current
-      this.lambda = 0.5;
+      this.lambda = 1.5;
       this.counter = 0;
-      perceptron = new Perceptron(2, new int[]{2}, 1, inputFile);
+      perceptron = new Perceptron(this.inputNodes, this.hiddenLayerNodes, this.outputNodes, inputFile);
       perceptron.randomizeWeights();                                          // Randomize weights before first use
-
+       double[][][] testWeights =
+               new double[][][] {
+                       new double[][] {
+                               new double[] {0.739674399, 1.665815801},
+                               new double[] {1.321837369, 1.8005763}
+                       },
+                       new double[][] {
+                               new double[] {0.089064485},
+                               new double[] {0.341737526}
+                       }
+               };
+      perceptron.setWeights(testWeights);
    }
 
    /**
@@ -68,17 +78,17 @@ public class Trainer
          outputNodes = Integer.parseInt(bufferedReader.readLine());  // Find number of output nodes
 
          int numberCases = Integer.parseInt(bufferedReader.readLine());  // Find the number of test cases
-         testCases = new double[numberCases][inputNodes]; //JM we already know the dimension. added inputNodes
-         truths = new double[numberCases][outputNodes]; //JM we already know the dimension. added outputNodes
+         testCases = new double[numberCases][inputNodes];
+         truths = new double[numberCases][outputNodes];
          for (int i = 0; i < numberCases; i++)
          {
             stringTokenizer = new StringTokenizer(bufferedReader.readLine());
-            // testCases[i] = new double[inputNodes][]; //JM added []
+            testCases[i] = new double[inputNodes];
             for (int j = 0; j < inputNodes; j++)
             {
                testCases[i][j] = Double.parseDouble(stringTokenizer.nextToken());
             }
-            // truths[i] = new double[outputNodes][]; //JM added []
+            truths[i] = new double[outputNodes];
             for (int j = 0; j < outputNodes; j++)
             {
                truths[i][j] = Double.parseDouble(stringTokenizer.nextToken());
@@ -98,7 +108,7 @@ public class Trainer
     */
    public static void main(String[] args)
    {
-      Trainer trainer = new Trainer("/Users/mihir/IdeaProjects/Neural Networks/Java XOR Implementation/src/old/inputsFile.txt");
+      Trainer trainer = new Trainer("/Users/ssamant/personal/school/src/org/neuralnet/inputsFile.txt");
       trainer.train();
 
    }
@@ -112,12 +122,9 @@ public class Trainer
     */
    void train()
    {
-      perceptron.randomizeWeights();
-
-      while (currError > MINIMUM_ERROR && counter < MAX_STEPS)
+      counter = 0; // TODO: REMOVE
+      while ((currError > MINIMUM_ERROR && counter < MAX_STEPS))
       {
-         currCase = truths[counter % testCases.length][0];
-         System.out.println("Current test case: " + currCase); //TODO: REMOVE DEBUG STATEMENT
          step();
          counter++;
          System.out.println("Counter: "+ counter + "\nCounter % #testcases: " + counter % testCases.length); //TODO: REMOVE DEBUG STATEMENT
@@ -132,57 +139,46 @@ public class Trainer
     */
    public void step()
    {
-      perceptron.runNetwork(testCases[counter % testCases.length]); // Train current perceptron
-      System.out.print("Pre-updated result: ");
-      perceptron.printResult();
+       double errors = 0.0;
+       for (int tc = 0; tc < testCases.length; tc++) {
+           perceptron.expectedOutputs = truths[tc];
+           perceptron.runNetwork(testCases[tc]); // Train current perceptron
+           /*System.out.print("Pre-updated result: ");
+           perceptron.printResult();*/
+           double trainedResult = perceptron.activations[perceptron.activations.length - 1][0];
+           double[][][] currPartialWeights = perceptron.findPartials(perceptron.expectedOutputs[0]);
 
-      double[][][] currPartialWeights = perceptron.findPartials(currCase);
-      System.out.println("Partials : " + Arrays.deepToString(currPartialWeights)); //TODO: REMOVE DEBUG STATEMENT
 
-      for (int i = 0; i < currPartialWeights.length; i++)
-      {
-         for (int j = 0; j < currPartialWeights[i].length; j++)
-         {
-            for (int k = 0; k < currPartialWeights[i][j].length; k++)
-            {
-               perceptron.weights[i][j][k] += -lambda * currPartialWeights[i][j][k]; // Updates currWeights to new weights
-            }
-         }
-      }
-
-      // double[][][] lambdasChoice = adaptLambda();  TODO: FUTURE WORK ON ADAPTIVE LAMBDA
-      // perceptron.setWeights(experimentalWeights);
-      perceptron.runNetwork(testCases[counter % testCases.length]);
-      System.out.print("Post-updated result: ");
-      perceptron.printResult();
-      double trainedResult = perceptron.activations[perceptron.activations.length - 1][0];
-
-      double newError = perceptron.calculateError(truths[counter % testCases.length][0], trainedResult);
-      previousError = currError;
-      currError = newError;
-      System.out.println("Previous Error: " + previousError); //TODO: REMOVE DEBUG STATEMENT
-      System.out.println("New Error: " + currError); //TODO: REMOVE DEBUG STATEMENT
-      System.out.println(); //TODO: REMOVE DEBUG STATEMENT
-
-      if(previousError < currError)
-      {
-         for (int i = 0; i < currPartialWeights.length; i++)
-         {
-            for (int j = 0; j < currPartialWeights[i].length; j++)
-            {
-               for (int k = 0; k < currPartialWeights[i][j].length; k++)
-               {
-                  perceptron.weights[i][j][k] -= -lambda * currPartialWeights[i][j][k]; // Roll back the last change so that the weights are still optimized
+           //currPartialWeights[0][0][0] = 0.037396443;
+           //currPartialWeights[0][1][0] = 0.04866787;
+           for (int i = 0; i < perceptron.numberActivationLayers - 1; i++) // SS: SHould this be -1?
+           {
+               for (int j = 0; j < perceptron.activations[i].length; j++) {
+                   for (int k = 0; k < perceptron.activations[i + 1].length; k++) // SS: Is this right?
+                   {
+                       perceptron.weights[i][j][k] += -lambda * currPartialWeights[i][j][k]; // Updates currWeights to new weights
+                   }
                }
-            }
-         }
-        currError = previousError;
-	counter = MAX_STEPS;
-      }
-      else 
-      {
-         previousError = currError;
-      }
+           }
+
+           // double[][][] lambdasChoice = adaptLambda();  TODO: FUTURE WORK ON ADAPTIVE LAMBDA
+           perceptron.runNetwork(testCases[tc]);
+           System.out.print("Post-updated result: ");
+           perceptron.printResult();
+           System.out.println("Partials: " + Arrays.deepToString(currPartialWeights)); //TODO: REMOVE DEBUG STATEMENT
+           System.out.println("Weights: " + Arrays.deepToString(perceptron.weights)); //TODO: REMOVE DEBUG STATEMENT
+
+           double newError = 0.5 * perceptron.calculateError(truths[tc][0], trainedResult);
+           System.out.println("New Error: " + newError);
+
+           errors += newError;
+
+       }
+
+       System.out.println("Current Error: " + currError);
+       System.out.println("Total Error: " + errors + "\n"); //TODO: REMOVE DEBUG STATEMENT
+
+      currError = errors;
    }
 
 
