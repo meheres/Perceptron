@@ -150,11 +150,11 @@ public class Trainer
       double[][][] currPartialWeights = perceptron.findPartials(perceptron.expectedOutputs[0]);
       System.out.println("Partials: " + Arrays.deepToString(currPartialWeights)); //TODO: REMOVE DEBUG STATEMENT
 
-      for (int i = 0; i < currPartialWeights.length; i++)
+      for (int i = 0; i < perceptron.numberActivationLayers - 2; i++)
       {
-         for (int j = 0; j < currPartialWeights[i].length; j++)
+         for (int j = 0; j < hiddenLayerNodes[i]; j++)
          {
-            for (int k = 0; k < currPartialWeights[i][j].length; k++)
+            for (int k = 0; k < hiddenLayerNodes[i + 1]; k++)
             {
                perceptron.weights[i][j][k] += -lambda * currPartialWeights[i][j][k]; // Updates currWeights to new weights
             }

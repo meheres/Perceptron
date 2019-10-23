@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
@@ -87,10 +88,19 @@ public class Perceptron
       // The first index of the connectivity layer represents the current layer, the second index represents the source node, and
       // the third index represents the destination node.
       weights = new double[numberActivationLayers - 1][][];
-      for (int i = 0; i < numberActivationLayers - 1; i++)
+      for (int i = 0; i < hiddenLayerNodes.length; i++)
       {
-         weights[i] = new double[activations[i].length][activations[i + 1].length];
+         if (i == 0)
+         {
+            weights[i] = new double[inputNodes][hiddenLayerNodes[i]];
+         }
+         else
+         {
+            weights[i] = new double[hiddenLayerNodes[i - 1]][hiddenLayerNodes[i]];
+         }
       }
+      weights[hiddenLayerNodes.length] = new double[hiddenLayerNodes[hiddenLayerNodes.length - 1]][outputNodes];
+      System.out.println(Arrays.deepToString(weights));
    }
 
 
