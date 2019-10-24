@@ -217,7 +217,7 @@ public class Perceptron
          {
             for (int k = 0; k < weights[i][j].length; k++)
             {
-               weights[i][j][k] = 1.0 * (Math.random());
+               weights[i][j][k] = 1.0 * (0.5-Math.random());
             }
          }
       }

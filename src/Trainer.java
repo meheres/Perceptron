@@ -12,7 +12,7 @@ public class Trainer
    Perceptron perceptron;
    String inputFile;
    static final double MINIMUM_ERROR = 0.01;
-   static final int MAX_STEPS = 100;
+   static final int MAX_STEPS = 1000;
    double[][] testCases;
    int counter;                               // Counter checks the number of steps and provides the current test case (counter %
                                               // testCases.length)
@@ -36,21 +36,73 @@ public class Trainer
       this.inputFile = inputFile;
       readInputFile();
       this.currError = Double.MAX_VALUE - 1.0;                                // Current error starts as larger as possible
-      this.lambda = 1.5;
+      this.lambda = 0.8;
       this.counter = 0;
       perceptron = new Perceptron(this.inputNodes, this.hiddenLayerNodes, this.outputNodes, inputFile);
       perceptron.randomizeWeights();                                          // Randomize weights before first use
+
        double[][][] testWeights =
                new double[][][] {
                        new double[][] {
-                               new double[] {0.739674399, 1.665815801},
-                               new double[] {1.321837369, 1.8005763}
+                               new double[] {1, 4, 4, -2},
+                               new double[] {-1, 3, -2, 4}
                        },
                        new double[][] {
-                               new double[] {0.089064485},
-                               new double[] {0.341737526}
+                               new double[] {-3},
+                               new double[] {10},
+                               new double[] {-5},
+                               new double[] {-5}
                        }
                };
+       double[][][] xorWeights =
+               new double[][][] {
+                       new double[][] {
+                               new double[] {1.60, 4.98, 5.27, -3.06},
+                               new double[] {-1.10, 5.01, -2.62, 6.07}
+                       },
+                       new double[][] {
+                               new double[] {-2.84},
+                               new double[] {10.94},
+                               new double[] {-5.61},
+                               new double[] {-7.14}
+                       }
+               };
+       double[][][] orWeights =
+               new double[][][] {
+                       new double[][] {
+                               new double[] {1.04, 2.72, -2.80, 1.73},
+                               new double[] {1.50, 2.62, -2.74, 2.72}
+                       },
+                       new double[][] {
+                               new double[] {-0.04},
+                               new double[] {2.35},
+                               new double[] {-7.68},
+                               new double[] {1.23}
+                       }
+               };
+       double[][][] andWeights =
+               new double[][][] {
+                       new double[][] {
+                               new double[] {0.09, 2.82, -3.14, -2.43},
+                               new double[] {1.53, 2.35, 0.54, 5.38}
+                       },
+                       new double[][] {
+                               new double[] {0.38},
+                               new double[] {-2.71},
+                               new double[] {-10.14},
+                               new double[] {5.67}
+                       }
+               };
+               /* new double[][][]{
+                       new double[][]{
+                               new double[]{0, 0},
+                               new double[]{0, 0}
+                       },
+                       new double[][]{
+                               new double[]{1},
+                               new double[]{0}
+                       }
+               };*/
       perceptron.setWeights(testWeights);
    }
 
