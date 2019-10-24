@@ -1,5 +1,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.StringTokenizer;
 
 /**
@@ -30,21 +32,21 @@ public class Perceptron
 
    BufferedReader bufferedReader;     // bufferedReader is for the input file. It allows for quick line-by-line reading of the file.
    StringTokenizer stringTokenizer;   // stringTokenizer reads each line provided by the BufferedReader, allowing for
-                                      // token-by-token reading.
+   // token-by-token reading.
 
    int numberActivationLayers;        // The number of connectivity layers will be one less than the number of activation layers.
-                                      // The number of activation layers will be 2 more than the number of hidden layers, one for
-                                      // input activations and one for output activations.
+   // The number of activation layers will be 2 more than the number of hidden layers, one for
+   // input activations and one for output activations.
 
    double[] inputs;                   // An Array that holds the values for the input activations. Read in first line of input
-                                      // file.
+   // file.
 
    double[] expectedOutputs;          // An Array that holds the values for the expected outputs, for comparison with the actual
-                                      // outputs.
+   // outputs.
 
    double[][] activations;            // A 2D Array that represents the different activation layers. First index will be the
-                                      // number of activation layers, and the second index will specify which node from the
-                                      // activation layer to use.
+   // number of activation layers, and the second index will specify which node from the
+   // activation layer to use.
 
    public double[][][] weights;       // A 3D Array that represents the connectivity layers.
 
@@ -63,8 +65,8 @@ public class Perceptron
       this.hiddenLayerNodes = hiddenLayerNodes;
       this.outputNodes = outputNodes;
       this.numberActivationLayers = NUM_COLUMNS + hiddenLayerNodes.length;  // add 2 to the number of hidden layers for the
-                                                                            // total number of layers (1 input + n hidden + 1
-                                                                            // output)
+      // total number of layers (1 input + n hidden + 1
+      // output)
       this.inputs = new double[inputNodes];
       this.expectedOutputs = new double[outputNodes];
       maxNumberNodes = inputNodes;
@@ -86,10 +88,19 @@ public class Perceptron
       // The first index of the connectivity layer represents the current layer, the second index represents the source node, and
       // the third index represents the destination node.
       weights = new double[numberActivationLayers - 1][][];
-      for (int i = 0; i < numberActivationLayers - 1; i++)
+      for (int i = 0; i < hiddenLayerNodes.length; i++)
       {
-         weights[i] = new double[activations[i].length][activations[i + 1].length];
+         if (i == 0)
+         {
+            weights[i] = new double[inputNodes][hiddenLayerNodes[i]];
+         }
+         else
+         {
+            weights[i] = new double[hiddenLayerNodes[i - 1]][hiddenLayerNodes[i]];
+         }
       }
+      weights[hiddenLayerNodes.length] = new double[hiddenLayerNodes[hiddenLayerNodes.length - 1]][outputNodes];
+      System.out.println(Arrays.deepToString(weights));
    }
 
 
@@ -107,27 +118,29 @@ public class Perceptron
       int[] inputarr = new int[1];
       double[] inputarr2 = new double[2];
       inputarr2[0] = 1.0;
-      inputarr2[1] = 0.0;
+      inputarr2[1] = 1.0;
       inputarr[0] = 2;
 
-      double[][][] testWeights;
-      testWeights =
+      double[][][] testWeights =
             new double[][][] {
-               new double[][] {
-                     new double[] {1.44, 0.49},
-                     new double[] {1.25, 0.05}
-               },
-               new double[][] {
-                     new double[] {0.22, 0.0},
-                     new double[] {0.11, 0.0}
-               }
+                  new double[][] {
+                        new double[] {0.739674399, 1.665815801},
+                        new double[] {1.321837369, 1.8005763}
+                  },
+                  new double[][] {
+                        new double[] {0.089064485},
+                        new double[] {0.341737526}
+                  }
             };
-      Perceptron testNetwork = new Perceptron(2, inputarr, 1, "/Users/mihir/IdeaProjects/Neural Networks/Java XOR " +
-            "Implementation/src/inputs/inputFile11.txt");
+      Perceptron testNetwork = new Perceptron(2, inputarr, 1, "inputsFile.txt");
       testNetwork.randomizeWeights();
       testNetwork.setWeights(testWeights);
       testNetwork.runNetwork(inputarr2);
       testNetwork.printResult();
+      System.out.println("Weights: " + Arrays.deepToString(testNetwork.weights));
+      System.out.println("Activations: " + Arrays.deepToString(testNetwork.activations));
+
+
    }
 
 
@@ -141,19 +154,26 @@ public class Perceptron
     */
    public void runNetwork(double[] inputs)
    {
+      System.out.println("Running Network------");
+      System.out.println("   Inputs: " + inputs[0] + ", " + inputs[1]);
+      System.out.println("   Truth Value: " + expectedOutputs[0]);
       for (int source = 0; source < inputs.length; source++)
       {
          activations[0][source] = inputs[source]; // Read inputs & modify input activations, 0 hardcoded for input activation layer
       }
 
+
       for (int n = 1; n < activations.length; n++)
       {
-         for (int dest = 0; dest < activations[0].length; dest++) // source is the second index of the weights, either k or j
+         for (int dest = 0; dest < activations[n].length; dest++) // source is the second index of the weights, either k or j
          {
-            for (int source = 0; source < activations[0].length; source++)    // dest is the third index of the weights, either j or i
+            double sumActivations = 0.0;
+            for (int source = 0; source < activations[n - 1].length; source++)    // dest is the third index of the weights,
+            // either j or i
             {
-               activations[n][dest] += f(activations[n - 1][source] * weights[n - 1][source][dest]);
+               sumActivations += activations[n - 1][source] * weights[n - 1][source][dest];
             }
+            activations[n][dest] = f(sumActivations);
          }
       }
    }
@@ -191,11 +211,11 @@ public class Perceptron
    {
       for (int i = 0; i < weights.length; i++)
       {
-         for (int j = 0; j < weights[0].length; j++)
+         for (int j = 0; j < weights[i].length; j++)
          {
-            for (int k = 0; k < weights[0][0].length; k++)
+            for (int k = 0; k < weights[i][j].length; k++)
             {
-               weights[i][j][k] = 1.0 * (Math.random());
+               weights[i][j][k] = 4.0 * (0.5-Math.random());
             }
          }
       }
@@ -206,29 +226,36 @@ public class Perceptron
     */
    public double[][][] findPartials(double truthValue)
    {
-      double[][][] partials = new double[maxNumberNodes][maxNumberNodes][maxNumberNodes];
+      double[][][] partials = new double[weights.length][][];
+      for (int m = 0; m < weights.length; m++)
+      {
+         for (int i = 0; i < weights[m].length; i++)
+         {
+            partials[m] = new double[weights[m].length][weights[m][i].length]; // Creates weights array via jagged array
+         }
+      }
 
       double outputResult = activations[activations.length - 1][0];
-      double error = truthValue - outputResult;
+      double error = truthValue - outputResult;                      // Assuming only one output, otherwise sum over the errors
 
       double sumHColumn = 0.0;
-      double sumAColumn = 0.0;
-
-      for (int k = 0; k < maxNumberNodes; k++)  // iterate over source nodes
+      for (int J = 0; J < hiddenLayerNodes[0]; J++) // Removed -1
       {
-         for (int j = 0; j < maxNumberNodes; j++)  // iterate over destination nodes
+         sumHColumn += (activations[1][J] * weights[1][J][0]);
+      }
+      for (int j = 0; j < hiddenLayerNodes[0]; j++)  // iterate over destination nodes weights[weights.length - 1].length
+      {
+         double singleOutputPartial = -1.0 * error * fPrime(sumHColumn) * activations[1][j];   // Partial for W_{j0}
+         partials[1][j][0] = singleOutputPartial;
+      }
+
+      double sumAColumn = 0.0;
+      for (int k = 0; k < inputNodes; k++)  // iterate over source nodes weights[0].length
+      {
+         for (int j = 0; j < hiddenLayerNodes[0]; j++)  // iterate over destination nodes weights[weights.length - 1].length
          {
-            sumHColumn = 0.0;
-            for (int J = 0; J < activations[0].length - 1; J++)
-            {
-               sumHColumn += (activations[1][J] * weights[1][J][0]);
-            }
-
-            double singleOutputPartial = -1.0 * error * fPrime(sumHColumn) * activations[1][j];   // Partial for W_{j0}
-            partials[1][j][0] = singleOutputPartial;
-
             sumAColumn = 0;
-            for (int K = 0; K < activations[0].length; K++)
+            for (int K = 0; K < inputNodes; K++)
             {
                sumAColumn += activations[0][K] * weights[0][K][j]; // First column
             }
@@ -253,9 +280,9 @@ public class Perceptron
    {
       for (int i = 0; i < this.weights.length; i++)
       {
-         for (int j = 0; j < this.weights[0].length; j++)
+         for (int j = 0; j < this.weights[i].length; j++)
          {
-            for (int k = 0; k < this.weights[0][0].length; k++)
+            for (int k = 0; k < this.weights[i][j].length; k++)
             {
                weights[i][j][k] = newWeights[i][j][k];
             }
