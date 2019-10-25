@@ -221,7 +221,7 @@ public class Perceptron
    /**
     * Find the partial derivatives for the gradient descent, then add them to the trial set of weights.
     */
-   public double[][][] findPartials(double truthValue)
+   public double[][][] findPartials(double[] truthValues)
    {
       double[][][] partials = new double[weights.length][][];
       for (int m = 0; m < weights.length; m++)
@@ -232,30 +232,42 @@ public class Perceptron
          }
       }
 
-      double outputResult = activations[activations.length - 1][0];
-      double error = truthValue - outputResult;                      // Assuming only one output, otherwise sum over the errors
+      double[] outputs = activations[activations.length - 1];
 
-      double sumHColumn = 0.0;
-      for (int J = 0; J < hiddenLayerNodes[0]; J++) // Removed -1
+      for (int i = 0; i < outputNodes; i++)
       {
-         sumHColumn += (activations[1][J] * weights[1][J][0]);       // Left outside the loop because it only happens once.
-                                                                     // To add back into loop, simply cut and paste.
-      }
-
-      double sumAColumn = 0.0;
-      for (int k = 0; k < inputNodes; k++)  // iterate over source nodes weights[0].length
-      {
-         for (int j = 0; j < hiddenLayerNodes[0]; j++)  // iterate over destination nodes weights[weights.length - 1].length
+         for (int k = 0; k < inputNodes; k++)  // iterate over source nodes weights[0].length
          {
-            double singleOutputPartial = -1.0 * error * fPrime(sumHColumn) * activations[1][j];   // Partial for W_{j0}
-            partials[1][j][0] = singleOutputPartial;
-            sumAColumn = 0;
-            for (int K = 0; K < inputNodes; K++)
+            for (int j = 0; j < hiddenLayerNodes[0]; j++)  // iterate over destination nodes weights[weights.length - 1].length
             {
-               sumAColumn += activations[0][K] * weights[0][K][j]; // First column
+               double sumHColumn = 0.0;
+               for (int J = 0; J < hiddenLayerNodes[0]; J++) // Removed -1
+               {
+                  sumHColumn += (activations[1][J] * weights[1][J][i]);
+               }
+
+               double outputPartial = -(truthValues[i] - outputs[i]) * fPrime(sumHColumn) * activations[1][j]; // Partial for W_{j0}
+               partials[1][j][i] = outputPartial;
+               double sumAColumn = 0.0;
+               for (int K = 0; K < inputNodes; K++)
+               {
+                  sumAColumn += activations[0][K] * weights[0][K][j]; // First column
+               }
+               double sumI = 0.0;
+               double sumJ = 0.0;
+               for (int I = 0; I < outputNodes; I++)
+               {
+                  for (int J = 0; J < hiddenLayerNodes[0]; J++) // Removed -1
+                  {
+                     sumHColumn += (activations[1][J] * weights[1][J][I]);
+                  }
+                  sumI += (truthValues[I] - outputs[I]) * fPrime(sumJ) * weights[1][j][I];
+               }
+
+               double multiOutputPartial =
+                     - activations[0][k] * fPrime(sumAColumn) * sumI * fPrime(sumHColumn) * weights[1][j][0];
+               partials[0][k][j] = multiOutputPartial;
             }
-            double multiOutputPartial = -1.0 * activations[0][k] * fPrime(sumAColumn) * error * fPrime(sumHColumn) * weights[1][j][0];
-            partials[0][k][j] = multiOutputPartial;
          }
       }
       return partials;
@@ -263,7 +275,9 @@ public class Perceptron
 
    void printResult()
    {
-      System.out.println("Perceptron's result: " + activations[activations.length - 1][0] + "; Expected Output " + expectedOutputs[0]);
+      System.out.println("Perceptron's output [1]: " + activations[activations.length - 1][0] + "; Expected Output " + expectedOutputs[0]);
+      System.out.println("Perceptron's output [2]: " + activations[activations.length - 1][1] + "; Expected Output " + expectedOutputs[1]);
+      System.out.println("Perceptron's output [3]: " + activations[activations.length - 1][2] + "; Expected Output " + expectedOutputs[2] + "\n");
    }
 
    /**

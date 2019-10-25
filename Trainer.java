@@ -150,8 +150,8 @@ public class Trainer
          perceptron.runNetwork(testCases[tc]); // Train current perceptron
            /*System.out.print("Pre-updated result: ");
            perceptron.printResult();*/
-         double trainedResult = perceptron.activations[perceptron.activations.length - 1][0];
-         double[][][] currPartialWeights = perceptron.findPartials(perceptron.expectedOutputs[0]);
+         double[] trainedResult = perceptron.activations[perceptron.activations.length - 1];
+         double[][][] currPartialWeights = perceptron.findPartials(perceptron.expectedOutputs);
 
 
          //currPartialWeights[0][0][0] = 0.037396443;
@@ -171,7 +171,9 @@ public class Trainer
          perceptron.runNetwork(testCases[tc]);
          perceptron.printResult();
 
-         double newError = 0.5 * perceptron.calculateError(truths[tc][0], trainedResult);
+         double newError = 0.5 * perceptron.calculateError(truths[tc][0], trainedResult[0]);
+         newError += 0.5 * perceptron.calculateError(truths[tc][1], trainedResult[1]);
+         newError += 0.5 * perceptron.calculateError(truths[tc][2], trainedResult[2]);
 
          errors += newError;
 
