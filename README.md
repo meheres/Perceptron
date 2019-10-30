@@ -30,12 +30,13 @@ The inputs file MUST be formatted correctly for the Simple Network to work.
 - The next line of the file should contain a double value of the minimum error to be reached before the Perceptron terminates its
  training.
 
-- The final line of the file should contain a double value of the maximum number of iterations before the training terminates
+- The next line of the file should contain a double value of the maximum number of iterations before the training terminates
  (times out). 
+ 
+- The next line of the file should contain a double value of the upper bound for the random weights.
 
-## Setting Initial Weights
-- Implementation not yet complete.
-
+- The final line of the file should contain a double value of the lower bound for the random weights.
+ 
 ## Notes
 In the main method, it is crucial to correctly define the inputs, outputs, and hidden layers in
 accordance with the inputs file.  
