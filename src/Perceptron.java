@@ -54,6 +54,8 @@ public class Perceptron
 
    public double[][][] weights;       // A 3D Array that represents the connectivity layers.
 
+   public double[][][] partials;      // Partials 3D Array, to avoid the heap allocation problems
+
    /**
     * Perceptron is the constructor for the neural network. It creates the activation layers and connectivity layers for the
     * network. The constructor also determines the most number of nodes by iterating over all of the activation layers.
@@ -104,6 +106,15 @@ public class Perceptron
          }
       }
       weights[hiddenLayerNodes.length] = new double[hiddenLayerNodes[hiddenLayerNodes.length - 1]][outputNodes];
+      partials = new double[weights.length][][];
+      for (int m = 0; m < weights.length; m++)
+      {
+         for (int i = 0; i < weights[m].length; i++)
+         {
+            partials[m] = new double[weights[m].length][weights[m][i].length]; // Creates weights array via jagged array
+         }
+      }
+
    }
 
 
@@ -235,14 +246,6 @@ public class Perceptron
     */
    public double[][][] findPartials(double[] truthValues)
    {
-      double[][][] partials = new double[weights.length][][];
-      for (int m = 0; m < weights.length; m++)
-      {
-         for (int i = 0; i < weights[m].length; i++)
-         {
-            partials[m] = new double[weights[m].length][weights[m][i].length]; // Creates weights array via jagged array
-         }
-      }
 
       double[] outputs = activations[activations.length - 1];                    // Output nodes
 

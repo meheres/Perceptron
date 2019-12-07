@@ -5,7 +5,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
-import java.util.Scanner;
 import java.util.StringTokenizer;
 
 /**
@@ -39,6 +38,7 @@ public class Trainer
    double lowValue;                           // Low threshold for randomized weights.
    double highValue;                          // High threshold for randomized weights.
    int numberCases;
+   double[][][] currPartialWeights;
 
    double lambda;                             // Training function
    double currError;
@@ -65,6 +65,19 @@ public class Trainer
       perceptron.randomizeWeights(lowValue, highValue);                       // Randomize weights before first use
       readInputActivations();
       readTruths();
+      double[][][] currPartialWeights = new double[perceptron.numberActivationLayers - 1][][];
+      for (int i = 0; i < hiddenLayerNodes.length; i++)
+      {
+         if (i == 0)
+         {
+            currPartialWeights[i] = new double[inputNodes][hiddenLayerNodes[i]];
+         }
+         else
+         {
+            currPartialWeights[i] = new double[hiddenLayerNodes[i - 1]][hiddenLayerNodes[i]];
+         }
+      }
+      currPartialWeights[hiddenLayerNodes.length] = new double[hiddenLayerNodes[hiddenLayerNodes.length - 1]][outputNodes];
    }
 
    /**
@@ -226,6 +239,7 @@ public class Trainer
 
    }
 
+
    /**
     * Function step runs an individual step in the training process. A step is defined as finding the partials, using the error
     * to update the weights of the perceptron, setting weights/running the network, then deciding whether or not to use the
@@ -238,8 +252,7 @@ public class Trainer
       {
          perceptron.expectedOutputs = truths[tc];
          perceptron.runNetwork(trialCases[tc]);                                              // Train current perceptron
-         double[][][] currPartialWeights = perceptron.findPartials(perceptron.expectedOutputs);
-
+         currPartialWeights = perceptron.findPartials(perceptron.expectedOutputs);
          for (int i = 0; i < perceptron.numberActivationLayers - 1; i++)
          {
             for (int j = 0; j < perceptron.activations[i].length; j++)                       // Loop over Source array.
@@ -255,7 +268,7 @@ public class Trainer
 
          perceptron.runNetwork(trialCases[tc]);
          double[] trainedResult = perceptron.activations[perceptron.activations.length - 1]; // Find error after weight update
-         // perceptron.printResult();                                                        // For small numbers of output nodes
+        // perceptron.printResult();                                                        // For small numbers of output nodes
 
          double newError = 0;                                                                // We could sum directly over errors,
          // but two step for debug/printing
