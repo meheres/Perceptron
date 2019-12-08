@@ -37,19 +37,19 @@ public class Perceptron
 
    BufferedReader bufferedReader;     // bufferedReader is for the input file. It allows for quick line-by-line reading of the file.
    StringTokenizer stringTokenizer;   // stringTokenizer reads each line provided by the BufferedReader, allowing for
-   // token-by-token reading.
+                                      // token-by-token reading.
 
    int numberActivationLayers;        // The number of connectivity layers will be one less than the number of activation layers.
-   // The number of activation layers will be 2 more than the number of hidden layers, one for
-   // input activations and one for output activations.
+                                      // The number of activation layers will be 2 more than the number of hidden layers, one for
+                                      // input activations and one for output activations.
 
    double[] inputs;                   // An Array that holds the values for the input activations. Read in first line of input file.
 
    double[] expectedOutputs;          // An Array that holds the values for the expected outputs, for comparison with the actual outputs.
 
    double[][] activations;            // A 2D Array that represents the different activation layers. First index will be the
-   // number of activation layers, and the second index will specify which node from the
-   // activation layer to use.
+                                      // number of activation layers, and the second index will specify which node from the
+                                      // activation layer to use.
 
    public double[][][] weights;       // A 3D Array that represents the connectivity layers.
 
@@ -69,7 +69,7 @@ public class Perceptron
       this.hiddenLayerNodes = hiddenLayerNodes;
       this.outputNodes = outputNodes;
       this.numberActivationLayers = NUM_COLUMNS + hiddenLayerNodes.length;  // add 2 to the number of hidden layers for the
-      // total number of layers (1 input + n hidden + 1 output)
+                                                                            // total number of layers (1 input + n hidden + 1 output)
       this.inputs = new double[inputNodes];
       this.expectedOutputs = new double[outputNodes];
       maxNumberNodes = inputNodes;
@@ -182,8 +182,7 @@ public class Perceptron
          {
             double sumActivations = 0.0;
             for (int source = 0; source < activations[n - 1].length; source++)    // dest is the third index of the weights,
-            // either j or i
-            {
+            {                                                                     // either j or i
                sumActivations += activations[n - 1][source] * weights[n - 1][source][dest];
             }
             activations[n][dest] = f(sumActivations);
