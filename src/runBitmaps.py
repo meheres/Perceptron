@@ -3,7 +3,7 @@
 import subprocess
 
 # filename
-word = "dadA.bmp"
+word = "smallA.bmp"
 # `cd' into the Perceptron Directory
 subprocess.run(["cd","~/IdeaProjects/Perceptron/src"])
 
@@ -16,11 +16,11 @@ subprocess.run(["java","DibDump",word,"bmpTruths.txt"])
 
 # compile the trainer, then run it with the correct arguments
 # this mandates that the `inputsFile.txt' is formatted correctly
-#subprocess.run(["javac","Perceptron.java"])
-#subprocess.run(["javac","Trainer.java"])
+subprocess.run(["javac","Perceptron.java"])
+subprocess.run(["javac","Trainer.java"])
 
 # run the trainer
-#subprocess.run(["java","Trainer","bmpInputsFile.txt","bmpTrialCases.txt","bmpTruths.txt","bmpFinalOuts.txt"])
+subprocess.run(["java","Trainer","bmpInputsFile.txt","bmpTrialCases.txt","bmpTruths.txt","bmpFinalOuts.txt"])
 
 # recompile the new bitmap
 subprocess.run(["java","DibDump",word,"tempFile.txt","bmpFinalOuts.txt"])

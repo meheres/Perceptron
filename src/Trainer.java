@@ -1,5 +1,3 @@
-package src;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -10,16 +8,19 @@ import java.util.StringTokenizer;
 /**
  * @author Mihir Sharma
  * Created on Friday, October 4th (10.4.19).
- * <p>
+ * 
  * The Trainer class is written to match the documentation as closely as possible.
- * <p>
+ * 
  * The Trainer class uses a partial derivative-based method to minimize the error function for any number of input nodes and any number of output
  * nodes, making the assumption that the previously written Perceptron class is a functioning perceptron model.
  * The Trainer class also requires a correctly formatted input file, as specified in the README.md file.
- * <p>
+ * 
  * Functions in this class include the following:
  * - main, which asks the user for an input file through the System.in and then runs the Trainer.
  * - readInputFile, which reads the input from the constructor's filename then populates the class-level variables.
+ * - readInputActivations, which reads the inputs and then populates the input activatiions.
+ * - readTruths, which reads the inputs and then populates the expected outputs.
+ * - writeOutputsToFile, 
  * - train, which begins the training and also provides diagnostic information after completion.
  * - step, which takes the individual steps during training. Matches documentation as closely as possible.
  */
@@ -37,7 +38,7 @@ public class Trainer
    double[][] truths;                         // A truth is an expected output.
    double lowValue;                           // Low threshold for randomized weights.
    double highValue;                          // High threshold for randomized weights.
-   int numberCases;
+   int numberCases;                           // Number of trial cases
    double[][][] currPartialWeights;
 
    double lambda;                             // Training function
@@ -50,7 +51,10 @@ public class Trainer
    /**
     * Creates a new trainer for a perceptron, using the user-provided input filename.
     *
-    * @param inputFile The list of input file names. Must be a full path.
+    * @param inputFile The input file name.
+    * @param activationsFile The name of the file containing activations.
+    * @param truthsFile The name of the file containing expected outputs.
+    * @param outputsFile The name of the file to which the perceptron's final outputs will be printed.
     */
    public Trainer(String inputFile, String activationsFile, String truthsFile, String outputsFile)
    {
@@ -85,7 +89,11 @@ public class Trainer
     * Uses System input to determine filename, with full file path. If inaccurate file path is provided, will throw FileNotFoundException and
     * terminate.
     *
-    * @param args an array of String arguments for the main method
+    * @param args an array of String arguments for the main method.
+    *             The first argument must be the name of the input file.
+    *             The second argument must be the name of the activations file.
+    *             The third argument must be the name of the truths file.
+    *             The fourth argument must be the name of the outputs file.
     */
    public static void main(String[] args)
    {
@@ -98,7 +106,7 @@ public class Trainer
    }
 
    /**
-    * Method File reads all the input as specified in the README file and updates the class level variables.
+    * Method readInputFile reads all the input as specified in the README file and updates the class level variables.
     * Uses a try-catch to deal with I/O exceptions.
     */
    public void readInputFile()
@@ -121,7 +129,7 @@ public class Trainer
 
          outputNodes = Integer.parseInt(bufferedReader.readLine());                          // Find number of output nodes
 
-         numberCases = Integer.parseInt(bufferedReader.readLine());                      // Find the number of trial cases
+         numberCases = Integer.parseInt(bufferedReader.readLine());                          // Find the number of trial cases
          trialCases = new double[numberCases][inputNodes];
          truths = new double[numberCases][outputNodes];
          lambda = Double.parseDouble(bufferedReader.readLine());                             // Lambda
@@ -138,6 +146,10 @@ public class Trainer
 
    }
 
+   /**
+    * Method readInputActivations uses the input file specified to read and load the input activations as specified.
+    * Uses a try-catch to handle I/O exceptions.
+    */
    public void readInputActivations()
    {
       BufferedReader br;
@@ -163,6 +175,10 @@ public class Trainer
       }
    }
 
+   /**
+    * Method readTruths() uses the input file specified to read and load the expected outputs, or truths, as specified.
+    * Uses a try-catch to handle I/O exceptions.
+    */
    public void readTruths()
    {
       BufferedReader br;
@@ -187,6 +203,10 @@ public class Trainer
       }
    }
 
+   /**
+    * Method printOutputsToFile takes the perceptron's current outputs and writes them to a specified file.
+    * Uses a try-catch to handle I/O exceptions.
+    */
    public void printOutputsToFile()
    {
       PrintWriter pw;
@@ -195,7 +215,7 @@ public class Trainer
          pw = new PrintWriter(outputsFile);
          for (int i = 0; i < perceptron.outputNodes; i++)
          {
-            pw.write(perceptron.activations[perceptron.activations.length - 1][i] + " ");
+            pw.write(perceptron.activations[perceptron.activations.length - 1][i] + " "); // Writes all values in last layer.
          }
          pw.close();
       }
@@ -229,12 +249,12 @@ public class Trainer
          System.out.println("\nTerminated because number of iterations exceeded the pre-determined threshold of " + MAX_STEPS);
       }
       System.out.println("Lambda: " + lambda);                                                        // Currently not adaptive.
-      System.out.println("Minimum Error: " + MINIMUM_ERROR + "\nMax Number of Steps: " + MAX_STEPS);
+      System.out.println("Minimum Error: " + MINIMUM_ERROR + "\nMax Number of Steps: " + MAX_STEPS);  // Print a bunch of debug info.
       System.out.println("For random weights: Low Value " + lowValue + ", High Value " + highValue);
       System.out.println("Counter: " + counter);
-      System.out.println("Error: " + currError);
+      System.out.println("Error: " + currError);                                                      
       System.out.println("Final weights: " + Arrays.deepToString(perceptron.weights));
-      printOutputsToFile();
+      printOutputsToFile();                                                                           // Writes final outputs to file.
 
 
    }
@@ -268,8 +288,10 @@ public class Trainer
 
          perceptron.runNetwork(trialCases[tc]);
          double[] trainedResult = perceptron.activations[perceptron.activations.length - 1]; // Find error after weight update
-        // perceptron.printResult();                                                        // For small numbers of output nodes
-
+         if (outputNodes <= 10)
+         {
+            perceptron.printResult();                                                        // For small numbers of output nodes
+         }
          double newError = 0;                                                                // We could sum directly over errors,
          // but two step for debug/printing
          for (int i = 0; i < perceptron.outputNodes; i++)
