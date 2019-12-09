@@ -1,3 +1,4 @@
+package src;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,14 +8,14 @@ import java.util.StringTokenizer;
 /**
  * @author Mihir Sharma
  * Created on Friday, November 6th (9.6.19)
- * <p>
+ *
  * The Perceptron class is written to follow the documentation as closely as possible.
- * <p>
+ *
  * The Perceptron class is a Java implementation of a basic neural network. The network attempts to solve a basic logic problem,
  * either AND, OR, or XOR, using a two-connectivity network with three layers of activation. The neural network takes in a list of double inputs,
  * then uses the provided weights (or randomized ones) to caluculate vector dot products and provide a vector of double outputs.
  * The Perceptron should be constructed within the Trainer.java class, as a basic perceptron during the optimization of weights.
- * <p>
+ *
  * Functions in this class include the following:
  * - main, which instantiates the Simple Network and runs the other two functions. The main also prints the output and its expected comparison.
  * - runNetwork, which uses the inputs and weights to run the Simple Network for an AND logic table.

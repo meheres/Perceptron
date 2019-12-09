@@ -1,3 +1,5 @@
+package src;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -24,7 +26,7 @@ import java.util.StringTokenizer;
  * - train, which begins the training and also provides diagnostic information after completion.
  * - step, which takes the individual steps during training. Matches documentation as closely as possible.
  */
-public class Trainer
+class Trainer
 {
    Perceptron perceptron;
    String inputFile;
