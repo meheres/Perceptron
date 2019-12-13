@@ -1,4 +1,4 @@
-package src;
+package src.old;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.util.StringTokenizer;
  * - setWeights, which allows to easily modify all of the Perceptron's weights at once.
  * - calculateError, which calculates the root of the sum of the squares as shown in the documentation. (Ti - Fi)^2.
  */
-public class Perceptron
+public class PerceptronOld
 {
    int inputNodes;                    // The number of nodes in the input activation layer.
    int[] hiddenLayerNodes;            // The number of nodes in each hidden activation layer.
@@ -64,7 +64,7 @@ public class Perceptron
     * @param hiddenLayerNodes
     * @param outputNodes
     */
-   public Perceptron(int inputNodes, int[] hiddenLayerNodes, int outputNodes, String inputFileName)
+   public PerceptronOld(int inputNodes, int[] hiddenLayerNodes, int outputNodes, String inputFileName)
    {
       this.inputNodes = inputNodes;
       this.hiddenLayerNodes = hiddenLayerNodes;
@@ -148,7 +148,7 @@ public class Perceptron
                         new double[] {0.341737526}
                   }
             };
-      Perceptron testNetwork = new Perceptron(2, inputarr, 1, "old/inputsFile.txt");
+      PerceptronOld testNetwork = new PerceptronOld(2, inputarr, 1, "old/inputsFile.txt");
       testNetwork.setWeights(testWeights);
       testNetwork.runNetwork(inputarr2);
       testNetwork.printResult();
@@ -232,11 +232,10 @@ public class Perceptron
          {
             for (int k = 0; k < weights[i][j].length; k++)
             {
-               weights[i][j][k] = (diff * Math.random()) - lowValue;
+               weights[i][j][k] = (diff * Math.random()) + lowValue;
             }
          }
       }
-      System.out.println(Arrays.deepToString(weights));
    }
 
    /**

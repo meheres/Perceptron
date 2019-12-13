@@ -1,10 +1,11 @@
-package src;
+package src.old;
+
+import src.BTrainer;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.StringTokenizer;
 
 /**
@@ -26,9 +27,9 @@ import java.util.StringTokenizer;
  * - train, which begins the training and also provides diagnostic information after completion.
  * - step, which takes the individual steps during training. Matches documentation as closely as possible.
  */
-class Trainer
+class TrainerOld
 {
-   Perceptron perceptron;
+   PerceptronOld perceptronOld;
    String inputFile;
    String activationsFile;
    String truthsFile;
@@ -58,7 +59,7 @@ class Trainer
     * @param truthsFile The name of the file containing expected outputs.
     * @param outputsFile The name of the file to which the perceptron's final outputs will be printed.
     */
-   public Trainer(String inputFile, String activationsFile, String truthsFile, String outputsFile)
+   public TrainerOld(String inputFile, String activationsFile, String truthsFile, String outputsFile)
    {
       this.inputFile = inputFile;
       this.activationsFile = activationsFile;
@@ -67,11 +68,11 @@ class Trainer
       readInputFile();
       this.currError = Double.MAX_VALUE - 1.0;                                // Current error starts as larger as possible
       this.counter = 0;
-      perceptron = new Perceptron(this.inputNodes, this.hiddenLayerNodes, this.outputNodes, inputFile);
-      perceptron.randomizeWeights(lowValue, highValue);                       // Randomize weights before first use
+      perceptronOld = new PerceptronOld(this.inputNodes, this.hiddenLayerNodes, this.outputNodes, inputFile);
+      perceptronOld.randomizeWeights(lowValue, highValue);                       // Randomize weights before first use
       readInputActivations();
       readTruths();
-      double[][][] currPartialWeights = new double[perceptron.numberActivationLayers - 1][][];
+      double[][][] currPartialWeights = new double[perceptronOld.numberActivationLayers - 1][][];
       for (int i = 0; i < hiddenLayerNodes.length; i++)
       {
          if (i == 0)
@@ -99,12 +100,17 @@ class Trainer
     */
    public static void main(String[] args)
    {
+      long startTime = System.nanoTime();
       String filename = args[0];
       String activationsFilename = args[1];
       String truthsFilename = args[2];
       String outputFilename = args[3];
-      Trainer trainer = new Trainer(filename, activationsFilename, truthsFilename, outputFilename);
+      TrainerOld trainer = new TrainerOld(filename, activationsFilename, truthsFilename, outputFilename);
       trainer.train();
+      long endTime = System.nanoTime();
+      double time = (endTime - startTime)/1E6;
+      System.out.println(time);
+      System.out.println("Trainer");
    }
 
    /**
@@ -162,7 +168,7 @@ class Trainer
          for (int i = 0; i < numberCases; i++)
          {
             String[] split = br.readLine().split(" ");
-            for (int j = 0; j < perceptron.inputNodes; j++)
+            for (int j = 0; j < perceptronOld.inputNodes; j++)
             {
                trialCases[i][j] = Double.parseDouble(split[j]);
             }
@@ -192,7 +198,7 @@ class Trainer
          {
             String[] split = br.readLine().split(" ");
 
-            for (int j = 0; j < perceptron.outputNodes; j++)
+            for (int j = 0; j < perceptronOld.outputNodes; j++)
             {
                truths[i][j] = Double.parseDouble(split[j]);
             }
@@ -215,9 +221,9 @@ class Trainer
       try
       {
          pw = new PrintWriter(outputsFile);
-         for (int i = 0; i < perceptron.outputNodes; i++)
+         for (int i = 0; i < perceptronOld.outputNodes; i++)
          {
-            pw.write(perceptron.activations[perceptron.activations.length - 1][i] + " "); // Writes all values in last layer.
+            pw.write(perceptronOld.activations[perceptronOld.activations.length - 1][i] + " "); // Writes all values in last layer.
          }
          pw.close();
       }
@@ -255,7 +261,7 @@ class Trainer
       System.out.println("For random weights: Low Value " + lowValue + ", High Value " + highValue);
       System.out.println("Counter: " + counter);
       System.out.println("Error: " + currError);                                                      
-      System.out.println("Final weights: " + Arrays.deepToString(perceptron.weights));
+      // System.out.println("Final weights: " + Arrays.deepToString(perceptron.weights));
       printOutputsToFile();                                                                           // Writes final outputs to file.
 
 
@@ -272,33 +278,30 @@ class Trainer
       double errors = 0.0;
       for (int tc = 0; tc < trialCases.length; tc++)
       {
-         perceptron.expectedOutputs = truths[tc];
-         perceptron.runNetwork(trialCases[tc]);                                              // Train current perceptron
-         currPartialWeights = perceptron.findPartials(perceptron.expectedOutputs);
-         for (int i = 0; i < perceptron.numberActivationLayers - 1; i++)
+         perceptronOld.expectedOutputs = truths[tc];
+         perceptronOld.runNetwork(trialCases[tc]);                                              // Train current perceptron
+         currPartialWeights = perceptronOld.findPartials(perceptronOld.expectedOutputs);
+         for (int i = 0; i < perceptronOld.numberActivationLayers - 1; i++)
          {
-            for (int j = 0; j < perceptron.activations[i].length; j++)                       // Loop over Source array.
+            for (int j = 0; j < perceptronOld.activations[i].length; j++)                       // Loop over Source array.
             {
-               for (int k = 0; k < perceptron.activations[i + 1].length; k++)                // Loop over Destination array.
+               for (int k = 0; k < perceptronOld.activations[i + 1].length; k++)                // Loop over Destination array.
                {
-                  perceptron.weights[i][j][k] += -lambda * currPartialWeights[i][j][k];      // Updates currWeights to new weights
+                  perceptronOld.weights[i][j][k] += -lambda * currPartialWeights[i][j][k];      // Updates currWeights to new weights
                }
             }
          }
 
          // double[][][] lambdasChoice = adaptLambda();  FUTURE WORK ON ADAPTIVE LAMBDA, for now "you touch it, you break it."
 
-         perceptron.runNetwork(trialCases[tc]);
-         double[] trainedResult = perceptron.activations[perceptron.activations.length - 1]; // Find error after weight update
-         if (outputNodes <= 10)
-         {
-            perceptron.printResult();                                                        // For small numbers of output nodes
-         }
+         perceptronOld.runNetwork(trialCases[tc]);
+         double[] trainedResult = perceptronOld.activations[perceptronOld.activations.length - 1]; // Find error after weight update
+         // perceptron.printResult();                                                        // For small numbers of output nodes
          double newError = 0;                                                                // We could sum directly over errors,
          // but two step for debug/printing
-         for (int i = 0; i < perceptron.outputNodes; i++)
+         for (int i = 0; i < perceptronOld.outputNodes; i++)
          {
-            newError += 0.5 * perceptron.calculateError(truths[tc][i], trainedResult[i]);
+            newError += 0.5 * perceptronOld.calculateError(truths[tc][i], trainedResult[i]);
          }
          errors += newError;
       } // For loop over the trial cases
