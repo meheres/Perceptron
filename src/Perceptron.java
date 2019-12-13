@@ -1,10 +1,5 @@
 package src;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.StringTokenizer;
-
 /**
  * @author Mihir Sharma
  * Created on Friday, November 6th (9.6.19)
@@ -25,7 +20,7 @@ import java.util.StringTokenizer;
  * - printResult, which provides some information by printing the result and the expected output.
  * - calculateError, which calculates the root of the sum of the squares as shown in the documentation. (Ti - Fi)^2.
  */
-public class BPerceptron
+public class Perceptron
 {
    int inputNodes;                    // The number of nodes in the input activation layer.
    int[] hiddenLayerNodes;            // The number of nodes in each hidden activation layer.
@@ -59,7 +54,7 @@ public class BPerceptron
     * @param hiddenLayerNodes An array containing the number of activations in each hidden layer.
     * @param outputNodes The number of output activations.
     */
-   public BPerceptron(int inputNodes, int[] hiddenLayerNodes, int outputNodes)
+   public Perceptron(int inputNodes, int[] hiddenLayerNodes, int outputNodes)
    {
       this.inputNodes = inputNodes;
       this.hiddenLayerNodes = hiddenLayerNodes;

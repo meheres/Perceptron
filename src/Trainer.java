@@ -12,22 +12,23 @@ import java.util.StringTokenizer;
  * 
  * The Trainer class is written to match the documentation as closely as possible.
  * 
- * The Trainer class uses a partial derivative-based method to minimize the error function for any number of input nodes and any number of output
- * nodes, making the assumption that the previously written Perceptron class is a functioning perceptron model.
- * The Trainer class also requires a correctly formatted input file, as specified in the README.md file.
+ * The Trainer class uses back propagation to minimize the error function for any number of input nodes and any number of output
+ * nodes, making the assumption that the previously written Perceptron class is a functioning perceptron model. The backpropagation
+ * algorithm is generalized to handle any number of hidden activation layers, and any number of activations in each layer.
+ * The Trainer class also requires correctly formatted input files, as specified in the README.md file.
  * 
  * Functions in this class include the following:
  * - main, which asks the user for an input file through the System.in and then runs the Trainer.
  * - readInputFile, which reads the input from the constructor's filename then populates the class-level variables.
  * - readInputActivations, which reads the inputs and then populates the input activatiions.
  * - readTruths, which reads the inputs and then populates the expected outputs.
- * - writeOutputsToFile, 
+ * - printOutputsToFile, which writes the final outputs to a file, each line in the output file representing the trained result for each case.
  * - train, which begins the training and also provides diagnostic information after completion.
  * - step, which takes the individual steps during training. Matches documentation as closely as possible.
  */
-public class BTrainer
+public class Trainer
 {
-   BPerceptron perceptron;
+   Perceptron perceptron;
    String inputFile;
    String activationsFile;
    String truthsFile;
@@ -49,24 +50,25 @@ public class BTrainer
    int outputNodes;                           // The number of nodes in the output activation layer.
 
    /**
-    * Creates a new trainer for a perceptron, using the user-provided input filename.
+    * Creates a new trainer for a perceptron, using the user-provided input filename. All files must follow the structure provided in the
+    * README.md file.
     *
     * @param inputFile The input file name.
     * @param activationsFile The name of the file containing activations.
     * @param truthsFile The name of the file containing expected outputs.
     * @param outputsFile The name of the file to which the perceptron's final outputs will be printed.
     */
-   public BTrainer(String inputFile, String activationsFile, String truthsFile, String outputsFile)
+   public Trainer(String inputFile, String activationsFile, String truthsFile, String outputsFile)
    {
       this.inputFile = inputFile;
       this.activationsFile = activationsFile;
       this.truthsFile = truthsFile;
       this.outputsFile = outputsFile;
       readInputFile();
-      this.currError = Double.MAX_VALUE - 1.0;                                // Current error starts as larger as possible
+      this.currError = Double.MAX_VALUE - 1.0;                                // The current error begins as large as possible.
       this.counter = 0;
-      perceptron = new BPerceptron(this.inputNodes, this.hiddenLayerNodes, this.outputNodes);
-      perceptron.randomizeWeights(lowValue, highValue);                       // Randomize weights before first use
+      perceptron = new Perceptron(this.inputNodes, this.hiddenLayerNodes, this.outputNodes);
+      perceptron.randomizeWeights(lowValue, highValue);                       // Randomize the weights before the first use.
       readInputActivations();
       readTruths();
       perceptron.lambda = lambda;
@@ -90,12 +92,11 @@ public class BTrainer
       String activationsFilename = args[1];
       String truthsFilename = args[2];
       String outputFilename = args[3];
-      BTrainer trainer = new BTrainer(filename, activationsFilename, truthsFilename, outputFilename);
+      Trainer trainer = new Trainer(filename, activationsFilename, truthsFilename, outputFilename);
       trainer.train();
       long endTime = System.nanoTime();
       double time = (endTime - startTime)/1E6;
       System.out.println("Time: " + time);
-      System.out.println("BTrainer");
    }
 
    /**
@@ -106,7 +107,6 @@ public class BTrainer
    {
       BufferedReader bufferedReader;
       StringTokenizer stringTokenizer;
-
       try
       {
          bufferedReader = new BufferedReader(new FileReader(inputFile));                     // Opens previously specified input file.
@@ -131,7 +131,7 @@ public class BTrainer
          lowValue = Double.parseDouble(bufferedReader.readLine());                           // Low Value
          highValue = Double.parseDouble(bufferedReader.readLine());                          // High Value
          bufferedReader.close();
-      }        // Reads the input file.
+      }  // Reads the input file.
       catch (IOException e)
       {
          throw new IllegalArgumentException("Input File " + e.toString() + " not accepted, terminating.");
@@ -150,7 +150,6 @@ public class BTrainer
       try
       {
          br = new BufferedReader(new FileReader(activationsFile));
-
          for (int i = 0; i < numberCases; i++)
          {
             String[] split = br.readLine().split(" ");
@@ -160,10 +159,8 @@ public class BTrainer
                trialCases[i][j] = Double.parseDouble(split[j]);
             }
          }
-
-
          br.close();
-      }
+      } // Reads the input file.
       catch (IOException e)
       {
          throw new IllegalArgumentException("Activations File " + e.toString() + " not accepted, terminating.");
@@ -191,7 +188,7 @@ public class BTrainer
             }
          }
          br.close();
-      }
+      } // Reads the input file.
       catch (IOException e)
       {
          throw new IllegalArgumentException("Truths File " + e.toString() + " not accepted, terminating.");
@@ -208,9 +205,14 @@ public class BTrainer
       try
       {
          pw = new PrintWriter(outputsFile);
-         for (int i = 0; i < perceptron.outputNodes; i++)
+         for (int j = 0; j < numberCases; j++)
          {
-            pw.write(perceptron.activations[perceptron.activations.length - 1][i] + " "); // Writes all values in last layer.
+            perceptron.runNetwork(trialCases[j]);
+            for (int i = 0; i < perceptron.outputNodes; i++)
+            {
+               pw.write(perceptron.activations[perceptron.activations.length - 1][i] + " "); // Writes all values in last layer.
+            }
+            pw.println();
          }
          pw.close();
       }
@@ -221,7 +223,7 @@ public class BTrainer
    }
 
    /**
-    * Function train makes steps and modifies the perceptron's weights using gradient descent until one of three conditions are met:
+    * Function train makes steps and modifies the perceptron's weights using gradient descent until one of two conditions are met:
     * 1. The error is less than a minimum error, or
     * 2. The training is capped by a predetermined counter.
     * Only randomizes the perceptron's weights the first time, after that it does not.
@@ -230,26 +232,36 @@ public class BTrainer
    void train()
    {
       counter = 0;
+
       while ((currError > MINIMUM_ERROR && counter < MAX_STEPS))
       {
          step();
          counter++;
       }
-      // Final weights: [[[-4.316252797058683, 3.9804910380455656, 4.104050501517506, -4.191499997560866, 3.663871622334993, 3.1052220770515966, 4.051284158628942, 8.075292536163476], [-7.798094954971835, 7.288882201832737, 7.390729163402655, 9.968988659509892, 6.852845789775467, 6.239198162614919, 7.30517388688126, -3.398760972493725]], [[-13.83970725785841, -11.805754487378614, -11.688158236061561], [1.006083243497097, -3.085485550073578, 3.238713071059456], [1.4614660144399974, -3.1685798225778816, 3.6300233116033302], [-1.2544889554869232, 8.563587112223395, -9.111047572445525], [1.0701066356328952, -2.196883191787846, 2.4493795260933253], [1.0276455223012981, -1.8245332161018673, 0.9685618012592963], [1.7041194176439167, -2.9300346611998775, 3.4791822557815917], [0.08243710245304843, 8.56093460780411, -8.829818031084338]]]
-      if (currError <= MINIMUM_ERROR)
+
+      if (currError <= MINIMUM_ERROR) // The first end condition.
       {
          System.out.println("Terminated because total error is less than the pre-determined threshold of " + MINIMUM_ERROR);
       }
-      else if (counter >= MAX_STEPS)
+
+      else if (counter >= MAX_STEPS) // The second end condition.
       {
          System.out.println("\nTerminated because number of iterations exceeded the pre-determined threshold of " + MAX_STEPS);
       }
+
+      System.out.print("Perceptron config: " + inputNodes + "-");
+      for (int i = 0; i < hiddenLayerNodes.length; i++)
+      {
+         System.out.print(hiddenLayerNodes[i] + "-");
+      }
+      System.out.print(outputNodes + "\n");
+
       System.out.println("Lambda: " + lambda);                                                        // Currently not adaptive.
       System.out.println("Minimum Error: " + MINIMUM_ERROR + "\nMax Number of Steps: " + MAX_STEPS);  // Print a bunch of debug info.
       System.out.println("For random weights: Low Value " + lowValue + ", High Value " + highValue);
       System.out.println("Number of iterations: " + counter);
       System.out.println("Error: " + currError);
-      // System.out.println("Final weights: " + Arrays.deepToString(perceptron.weights));
+      // System.out.println("Final weights: " + Arrays.deepToString(perceptron.weights));             // Print final weights for debugging purposes.
       printOutputsToFile();                                                                           // Writes final outputs to file.
 
 
@@ -257,9 +269,8 @@ public class BTrainer
 
 
    /**
-    * Function step runs an individual step in the training process. A step is defined as finding the partials, using the error
-    * to update the weights of the perceptron, setting weights/running the network, then deciding whether or not to use the
-    * updated weights.
+    * Function step runs an individual step in the training process. A step is defined as defining the expected outputs of the current case, then
+    * running the network using the current trial case, then modifies the weights of the perceptron using back propagation.
     */
    public void step()
    {
@@ -267,19 +278,18 @@ public class BTrainer
       for (int tc = 0; tc < trialCases.length; tc++)
       {
          perceptron.expectedOutputs = truths[tc];
-         perceptron.runNetwork(trialCases[tc]);                                              // Train current perceptron
+         perceptron.runNetwork(trialCases[tc]);
          perceptron.backProp(truths[tc]);
 
          double[] trainedResult = perceptron.activations[perceptron.activations.length - 1]; // Find error after weight updates
 
-         perceptron.printResult();                                                        // Uncomment for small numbers of output nodes
-         double newError = 0;                                                                // We could sum directly over errors,
-         for (int i = 0; i < perceptron.outputNodes; i++)                                    // but two step for debug/printing
+         double newError = 0;
+         for (int i = 0; i < perceptron.outputNodes; i++)
          {
-            newError += 0.5 * perceptron.calculateError(truths[tc][i], trainedResult[i]);
-         }
+            newError += 0.5 * perceptron.calculateError(truths[tc][i], trainedResult[i]);    // We could sum directly over errors, but this is better
+         }                                                                                   // for debugging.
          errors += newError;
-      } // For loop over the trial cases
+      } // for (int tc = 0; tc < trialCases.length; tc++)
       currError = errors;
    }
 

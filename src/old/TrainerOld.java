@@ -1,7 +1,5 @@
 package src.old;
 
-import src.BTrainer;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
