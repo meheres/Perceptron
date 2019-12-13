@@ -6,8 +6,7 @@ package src;
  *
  * The Perceptron class is written to follow the documentation as closely as possible.
  *
- * The Perceptron class is a Java implementation of a basic neural network. The network attempts to solve a basic logic problem,
- * either AND, OR, or XOR, using a two-connectivity network with three layers of activation. The neural network takes in a list of double inputs,
+ * The Perceptron class is a Java implementation of a basic neural network. The network takes in a list of double inputs,
  * then uses the provided weights (or randomized ones) to caluculate vector dot products and provide a vector of double outputs.
  * The Perceptron should be constructed within the Trainer.java class, as a basic perceptron during the optimization of weights.
  *
