@@ -24,18 +24,25 @@ The Trainer class's main method must be run with four arguments in the ```String
 
 - The third line of the file should be the number of output nodes.
 
-- The fourth line of the file should contain a double value of the starting value for lambda. Currently, the lambda value will be
- the final lambda value because lambda is not set to be adaptive, but will eventually be set to E/10.
+- The fourth line of the file should contain a double value of the starting value for lambda.
 
-- The fifth line of the file should contain a double value of the minimum error to be reached before the Perceptron terminates its
+- The fifth line of the file should contain a double value for the maximum value of lambda.
+
+- The sixth line of the file should contain a double value of the constant with which lambda will be multiplied when the previous
+ error is less than the current error.
+ 
+- The seventh line of the file should contain a double value of the constant with which lambda will be multiplied when the
+ previous error is greater than the current error.
+
+- The eighth line of the file should contain an int value of the minimum error to be reached before the Perceptron terminates its
  training.
 
-- The sixth line of the file should contain a double value of the maximum number of iterations before the training terminates
+- The ninth line of the file should contain a double value of the maximum number of iterations before the training terminates
  (times out). 
  
-- The seventh line of the file should contain a double value of the upper bound for the random weights.
+- The tenth line of the file should contain a double value of the lower bound for the random weights.
 
-- The eighth and final line of the file should contain a double value of the lower bound for the random weights.
+- The eleventh and final line of the file should contain a double value of the upper bound for the random weights.
  
 ## Trial Cases File Format
 - The number of lines in this file must be exactly equal to the number of trials.

@@ -39,10 +39,14 @@ public class Trainer
    double[][] truths;                         // A truth is an expected output.
    double lowValue;                           // Low threshold for randomized weights.
    double highValue;                          // High threshold for randomized weights.
-   int numberCases;                           // Number of trial cases
+   int numberCases;                           // Number of trial cases.
 
-   double lambda;                             // Training function
+   double lambda;                             // Training function.
+   double MAX_LAMBDA;                         // A cap for the lambda so that multiplication is reasonable.
+   double lambdaMultiplier;                   // Constant used to multiply when adapting lambda.
+   double lambdaDivider;                      // Constant used to divide when adapting lambda.
    double currError;
+   double prevError;                          // Used in adaptive lambda.
 
    int inputNodes;                            // The number of nodes in the input activation layer.
    int[] hiddenLayerNodes;                    // The number of nodes in each hidden activation layer.
@@ -125,6 +129,9 @@ public class Trainer
          trialCases = new double[numberCases][inputNodes];
          truths = new double[numberCases][outputNodes];
          lambda = Double.parseDouble(bufferedReader.readLine());                             // Lambda
+         MAX_LAMBDA = Double.parseDouble(bufferedReader.readLine());                         // Lambda Cap
+         lambdaMultiplier = Double.parseDouble(bufferedReader.readLine());                   // Lambda Multiplier
+         lambdaDivider = Double.parseDouble(bufferedReader.readLine());
          MINIMUM_ERROR = Double.parseDouble(bufferedReader.readLine());                      // Error
          MAX_STEPS = Integer.parseInt(bufferedReader.readLine());                            // Steps
          lowValue = Double.parseDouble(bufferedReader.readLine());                           // Low Value
@@ -248,7 +255,7 @@ public class Trainer
          System.out.println("\nTerminated because number of iterations exceeded the pre-determined threshold of " + MAX_STEPS);
       }
 
-      System.out.print("Perceptron config: " + inputNodes + "-");
+      System.out.print("Perceptron configuration: " + inputNodes + "-");
       for (int i = 0; i < hiddenLayerNodes.length; i++)
       {
          System.out.print(hiddenLayerNodes[i] + "-");
@@ -273,6 +280,7 @@ public class Trainer
     */
    public void step()
    {
+      prevError = currError;
       double errors = 0.0;
       for (int tc = 0; tc < trialCases.length; tc++)
       {
@@ -290,23 +298,24 @@ public class Trainer
          errors += newError;
       } // for (int tc = 0; tc < trialCases.length; tc++)
       currError = errors;
+      adaptLambda();
    }
 
 
    /**
-    * Function adaptLambda never gets used. In the future, it will be used for the adaptive lambda, but currently provides an added layer of
-    * unnecessary problems to the code.
-    *
+    * Function adaptLambda uses the previously specified multiplier and divider to adapt the lambda value depending on whether the error is getting
+    * smaller or larger.
+    */
     public void adaptLambda()
     {
-    if(totalError < previousTotalError)
-    {
-    lambda *= 2.0;
+      if(currError < prevError && lambda < MAX_LAMBDA)
+      {
+         lambda *= lambdaMultiplier;
+      }
+      else
+      {
+         lambda /= lambdaDivider;
+      }
     }
-    else
-    {
-    lambda /= 2.0;
-    }
-    }*/
 
 }
