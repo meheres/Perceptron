@@ -1,13 +1,12 @@
 # Perceptron
 Honors Advanced Topics in Computer Science: Neural Networks, Dr. Eric R. Nelson
 
-Currently a 2-2-1 Perceptron which is able to solve the AND, OR, & XOR logic problems. Additionally, it is capable of handling
- Bitmap files and training to match them. The program trains using a version of the back propagation algorithm for two-layer
-  networks.
+A Perceptron which is able to solve the AND, OR, & XOR logic problems. Additionally, it is capable of handling
+ Bitmap files and training to match them. The program trains using back propagation for any number of hidden layers.
 
 ## Running Trainer.main()
-The Trainer class's main method must be run with four arguments in the ```String[] args```. Currently, it is done through the
- command line, as follows:
+The Trainer class's main method must be run with four arguments in the ```String[] args```. Currently, the arguments are passed in
+ done through the command line, as the following example indicates:
  
  ```java Trainer.java inputsFile trialCasesFile truthsFile outputsFile```
  
@@ -26,8 +25,7 @@ The Trainer class's main method must be run with four arguments in the ```String
 - The third line of the file should be the number of output nodes.
 
 - The fourth line of the file should contain a double value of the starting value for lambda. Currently, the lambda value will be
- the
- final lambda value because lambda is not set to be adaptive, but will eventually be set to E/10.
+ the final lambda value because lambda is not set to be adaptive, but will eventually be set to E/10.
 
 - The fifth line of the file should contain a double value of the minimum error to be reached before the Perceptron terminates its
  training.
@@ -57,8 +55,8 @@ The Trainer class's main method must be run with four arguments in the ```String
 
 
 ## Outputs File Format
-- The Outputs File can be any file without valuable information. It will have the Perceptron's last result printed to it.
+- The Outputs File can be any file without valuable information. It will have the Perceptron's final result printed to it.
 
 ## Notes
-The code is not written for large-scale distribution, so it mandates that all files be correctly formatted as specified
+The code is not written for large-scale distribution, so all files must be correctly formatted as specified
  -- otherwise, there may be runtime errors.  

@@ -17,14 +17,12 @@ import java.util.StringTokenizer;
  * The Perceptron should be constructed within the Trainer.java class, as a basic perceptron during the optimization of weights.
  *
  * Functions in this class include the following:
- * - main, which instantiates the Simple Network and runs the other two functions. The main also prints the output and its expected comparison.
  * - runNetwork, which uses the inputs and weights to run the Simple Network for an AND logic table.
+ * - backProp, which runs the back propagation algorithm to modify the weights of the Perceptron, based on a set of expected outputs.
  * - f, which follows the documentation's notation for the threshold function.
  * - fPrime, which is the derivative of the threshold function.
  * - randomizeWeights, which uses a lower bound and an upper bound to randomize the Perceptron's weights.
- * - findPartials, which calculates the partial derivatives as described in the documentation.
  * - printResult, which provides some information by printing the result and the expected output.
- * - setWeights, which allows to easily modify all of the Perceptron's weights at once.
  * - calculateError, which calculates the root of the sum of the squares as shown in the documentation. (Ti - Fi)^2.
  */
 public class BPerceptron
@@ -32,18 +30,12 @@ public class BPerceptron
    int inputNodes;                    // The number of nodes in the input activation layer.
    int[] hiddenLayerNodes;            // The number of nodes in each hidden activation layer.
    int outputNodes;                   // The number of nodes in the output activation layer.
-   int maxNumberNodes;                // The maximum number of nodes used in the perceptron.
 
    static final int NUM_COLUMNS = 2;  // One for the input layer, one for the output layer.
-
-   BufferedReader bufferedReader;     // bufferedReader is for the input file. It allows for quick line-by-line reading of the file.
-   StringTokenizer stringTokenizer;   // stringTokenizer reads each line provided by the BufferedReader, allowing for token-by-token reading.
 
    int numberActivationLayers;        // The number of connectivity layers will be one less than the number of activation layers.
                                       // The number of activation layers will be 2 more than the number of hidden layers, one for
                                       // input activations and one for output activations.
-
-   double[] inputs;                   // An Array that holds the values for the input activations. Read in first line of input file.
 
    double[] expectedOutputs;          // An Array that holds the values for the expected outputs, for comparison with the actual outputs.
    double[][] activations;            // A 2D Array that represents the different activation layers. First index will be the number of activation
@@ -57,36 +49,32 @@ public class BPerceptron
 
    public double[][][] weights;        // A 3D Array that represents the connectivity layers.
 
-   public double[][][] partials;       // Partials 3D Array, to avoid the heap allocation problems
+   public double[][][] partials;       // Partials 3D Array, may not be necessary, but left in because "you touch it, you break it!"
 
    /**
-    * Perceptron is the constructor for the neural network. It creates the activation layers and connectivity layers for the
-    * network. The constructor also determines the most number of nodes by iterating over all of the activation layers.
+    * BPerceptron is the constructor for the neural network. It creates the activation layers and connectivity layers for the
+    * network, as well as the arrays for all of the variables used during back propagation.
     *
-    * @param inputNodes
-    * @param hiddenLayerNodes
-    * @param outputNodes
+    * @param inputNodes The number of input activations.
+    * @param hiddenLayerNodes An array containing the number of activations in each hidden layer.
+    * @param outputNodes The number of output activations.
     */
-   public BPerceptron(int inputNodes, int[] hiddenLayerNodes, int outputNodes, String inputFileName)
+   public BPerceptron(int inputNodes, int[] hiddenLayerNodes, int outputNodes)
    {
       this.inputNodes = inputNodes;
       this.hiddenLayerNodes = hiddenLayerNodes;
       this.outputNodes = outputNodes;
       this.numberActivationLayers = NUM_COLUMNS + hiddenLayerNodes.length;  // add 2 to the number of hidden layers for the
-      // total number of layers (1 input + n hidden + 1 output)
-      this.inputs = new double[inputNodes];
+                                                                            // total number of layers (1 input + n hidden + 1 output)
       this.expectedOutputs = new double[outputNodes];
+      activations = new double[numberActivationLayers][];   // The indices of the activations array matches the documentation exactly. The first
+                                                            // index represents the current layer, and the second index represents the current node.
 
-
-      // The first index of the activationLayers represents the number of nodes in the layer (limited by the maximum number of
-      // nodes in the neural network, while the second index is the number of activation layers.
-      activations = new double[numberActivationLayers][];
-      // theta, omega, psi are NOT computed for input layer. So, one less than activations
-      theta = new double[numberActivationLayers - 1][];
-      omega = new double[numberActivationLayers - 1][];
+      theta = new double[numberActivationLayers - 1][];     // Theta, omega, and psi are not computed for the input layer,
+      omega = new double[numberActivationLayers - 1][];     // so the lengths are one less than the length of activations.
       psi = new double[numberActivationLayers - 1][];
 
-      activations[0] = new double[inputNodes];       // Nothing for theta, omega, psi, so their indices will be one less during the rest.
+      activations[0] = new double[inputNodes];
 
       for (int i = 1; i < activations.length - 1; i++)
       {
@@ -100,9 +88,10 @@ public class BPerceptron
       omega[activations.length - 2] = new double[outputNodes];
       psi[activations.length - 2] = new double[outputNodes];
 
-      // The first index of the connectivity layer represents the current layer, the second index represents the source node, and
-      // the third index represents the destination node.
-      weights = new double[numberActivationLayers - 1][][];
+
+      weights = new double[numberActivationLayers - 1][][];       // The first index of the connectivity layer represents the current layer,  the
+                                                                  // second index represents the source node, and the third index represents the
+                                                                  // destination node, as specified in the documentation.
 
       for (int i = 0; i < hiddenLayerNodes.length; i++)
       {
@@ -114,7 +103,7 @@ public class BPerceptron
          {
             weights[i] = new double[hiddenLayerNodes[i - 1]][hiddenLayerNodes[i]];
          }
-      }
+      } // for (int i = 0; i < hiddenLayerNodes.length; i++)
       weights[hiddenLayerNodes.length] = new double[hiddenLayerNodes[hiddenLayerNodes.length - 1]][outputNodes];
       partials = new double[weights.length][][];
       for (int m = 0; m < weights.length; m++)
@@ -124,44 +113,6 @@ public class BPerceptron
             partials[m] = new double[weights[m].length][weights[m][i].length];
          }
       }
-
-   }
-
-   /**
-    * NOTE: THIS METHOD NEVER GETS USED. IT IS FOR TESTING PURPOSES ONLY.
-    *
-    * The main method is the manner in which the Simple Network is run. Currently, it creates a 2-2-1 network and then runs the
-    * readInput and runNetwork methods on that network. Finally, the network outputs its result for the test value. Currently,
-    * it is limited by the input file -- in the event that the input file is formatted incorrectly, the program will shut down.
-    *
-    * @param args The arguments for the main method.
-    */
-   public static void main(String[] args) throws IOException
-   {
-      int[] inputarr = new int[1];
-      double[] inputarr2 = new double[2];
-      inputarr2[0] = 1.0;
-      inputarr2[1] = 1.0;
-      inputarr[0] = 2;
-
-      double[][][] testWeights =
-            new double[][][] {
-                  new double[][] {
-                        new double[] {0.739674399, 1.665815801},
-                        new double[] {1.321837369, 1.8005763}
-                  },
-                  new double[][] {
-                        new double[] {0.089064485},
-                        new double[] {0.341737526}
-                  }
-            };
-      BPerceptron testNetwork = new BPerceptron(2, inputarr, 1, "old/inputsFile.txt");
-      testNetwork.setWeights(testWeights);
-      testNetwork.runNetwork(inputarr2);
-      testNetwork.printResult();
-      System.out.println("Weights: " + Arrays.deepToString(testNetwork.weights));
-      System.out.println("Activations: " + Arrays.deepToString(testNetwork.activations));
-
 
    }
 
@@ -179,33 +130,30 @@ public class BPerceptron
       // Set inputs
       for (int source = 0; source < inputs.length; source++)
       {
-         activations[0][source] = inputs[source];                                 // Read inputs & modify input activations, 0 hardcoded for
-      }                                                                           // input activation layer
-
+         activations[0][source] = inputs[source];        // Read inputs & modify input activations, the 0 is hardcoded for the input activation layer.
+      }
       // Forward prop
       for (int n = 1; n < activations.length; n++)
       {
-         for (int dest = 0; dest < activations[n].length; dest++)                 // source is the second index of the weights, either k or j
+         for (int dest = 0; dest < activations[n].length; dest++)
          {
             double sumActivations = 0.0;
-            for (int source = 0; source < activations[n - 1].length; source++)    // dest is the third index of the weights,
-            // either j or i
+            for (int source = 0; source < activations[n - 1].length; source++)
             {
                sumActivations += activations[n - 1][source] * weights[n - 1][source][dest];
-            }                                    // Here variable dest is "i" and variable source is "j"
-                                                 // We can save theta_i before we take the derivative to calculate h_j
-            theta[n - 1][dest] = sumActivations; // Calculate theta_i and h_j during forward propagation
+            }                                            // We can save theta_i before we take the derivative to calculate h_j.
+            theta[n - 1][dest] = sumActivations;         // Calculate theta_i and h_j during forward propagation.
             activations[n][dest] = f(sumActivations);
-         }
-      }
+         }  // for (int dest = 0; dest < activations[n].length; dest++)
+      }     // for (int n = 1; n < activations.length; n++)
    }
 
 
    /**
     * Method backProp follows the documentation to use back propagation to modify the perceptron's weights based upon a set of expected outputs.
-    * There are three cases: output layer, hidden layers, and input layer
-    * For output layer, formulae are slightly different (no loops)
-    * For input layer, only partials and weights need to be calculated
+    * There are three cases: the output layer, the hidden layers, and the input layer.
+    * For the output layer, formulae are slightly different (no loops).
+    * For the input layer, only partials and weights need to be calculated.
     *
     * @param truth The set of expected outputs.
     */
@@ -229,8 +177,8 @@ public class BPerceptron
                weights[n][source][dest] += partials[n][source][dest];
             }
             psi[n - 1][source] = omega[n - 1][source] * fPrime(theta[n - 1][source]);
-         }
-      }
+         } // for (int source = 0; source < activations[n].length; source++)
+      }    // for (n = activations.length - 2; n > 0; n--)
       n = 0;
       for (int source = 0; source < activations[n].length; source++) // INPUT LAYER
       {
@@ -272,8 +220,8 @@ public class BPerceptron
    /**
     * Randomizes the weights in the perceptron.
     *
-    * @param highValue the highest value that the random weights can go to.
     * @param lowValue the lowest value that the random weights can go to.
+    * @param highValue the highest value that the random weights can go to.
     */
    void randomizeWeights(double lowValue, double highValue)
    {
@@ -304,29 +252,11 @@ public class BPerceptron
    }
 
    /**
-    * Setter function for the weights variable.
-    *
-    * @param newWeights The new weights to replace the original ones.
-    */
-   public void setWeights(double[][][] newWeights)
-   {
-      for (int i = 0; i < this.weights.length; i++)
-      {
-         for (int j = 0; j < this.weights[i].length; j++)
-         {
-            for (int k = 0; k < this.weights[i][j].length; k++)
-            {
-               weights[i][j][k] = newWeights[i][j][k];
-            }
-         }
-      }
-   }
-
-   /**
     * Calculate error calculates the perceptron's error in relation to a provided truth value, using the formula written in the
     * design document.
     *
     * @param truthValue The truth value, or expected output.
+    * @param networkOutput The network's calculated output.
     * @return A double value for the error.
     */
    public double calculateError (double truthValue, double networkOutput)

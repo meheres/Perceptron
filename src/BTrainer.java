@@ -65,7 +65,7 @@ public class BTrainer
       readInputFile();
       this.currError = Double.MAX_VALUE - 1.0;                                // Current error starts as larger as possible
       this.counter = 0;
-      perceptron = new BPerceptron(this.inputNodes, this.hiddenLayerNodes, this.outputNodes, inputFile);
+      perceptron = new BPerceptron(this.inputNodes, this.hiddenLayerNodes, this.outputNodes);
       perceptron.randomizeWeights(lowValue, highValue);                       // Randomize weights before first use
       readInputActivations();
       readTruths();
