@@ -195,7 +195,7 @@ public class DibDump
     * red, green and blue colors as an RgbQuad object. See rgbToPel(int red, int
     * green, int blue) to go the the other way.
     */
-   public RgbQuad pelToRGB(int pel)
+   public static RgbQuad pelToRGB(int pel)
    {
       RgbQuad rgb = new RgbQuad();
 
@@ -212,7 +212,7 @@ public class DibDump
     * The rgbToPel method takes red, green and blue color values and returns a
     * single 32-bit integer color. See pelToRGB(int pel) to go the other way.
     */
-   public int rgbToPel(int red, int green, int blue)
+   public static int rgbToPel(int red, int green, int blue)
    {
       return (red << 16) | (green << 8) | blue;
    }
@@ -222,7 +222,7 @@ public class DibDump
     * picture element (pel) and returns the gray scale pel using just one of may
     * possible formulas
     */
-   public int colorToGrayscale(int pel)
+   public static int colorToGrayscale(int pel)
    {
       RgbQuad rgb = pelToRGB(pel);
 
@@ -270,8 +270,6 @@ public class DibDump
       else
          activationsFileName = null;
       //   activationsFileName = "/Users/mihir/IdeaProjects/Neural/Network/src/trialCases.txt";
-
-
 
 
       try // lots of things can go wrong when doing file i/o
@@ -435,7 +433,6 @@ public class DibDump
                bmpInfoHeader_biClrImportant);
 
          System.out.printf("\n");
-
 
 
 // Since we use the height to crate arrays, it cannot have a negative a value. If the height field is
@@ -889,6 +886,15 @@ public class DibDump
          String fileContents = "";
          int iterations = 0;
 
+
+         double xCom = findCom(imageArray)[0];
+         double yCom = findCom(imageArray)[1];
+
+         int xDist = (int) (bmpInfoHeader_biHeight / 2.0 - xCom);
+         int yDist = (int) (bmpInfoHeader_biWidth / 2.0 - yCom);
+
+         imageArray = shiftArr(imageArray, xDist, yDist);
+
          for (i = bmpInfoHeader_biHeight - 1; i >= 0; --i) // write over the rows (in the usual inverted format)
          {
             for (j = 0; j < bmpInfoHeader_biWidth; ++j) // and the columns
@@ -897,8 +903,10 @@ public class DibDump
                   pel = activationsArr[iterations];
                else
                   pel = imageArray[i][j];
+               pel = colorToGrayscale(pel);
 
-               double scaledPel = ((double) (pel & 0x00FFFFFF)/ MAX_LITTLE_ENDIAN_PEL);
+
+               double scaledPel = ((double) (~pel & 0x00FFFFFF) / MAX_LITTLE_ENDIAN_PEL);
                fileContents += " " + scaledPel;
 
                rgbQuad_rgbBlue = pel & 0x00FF;
@@ -916,14 +924,51 @@ public class DibDump
                out.writeByte(0); // Now write out the "dead bytes" to pad to a 4 byte boundary
             }
          } // for (i = bmpInfoHeader_biHeight - 1; i >= 0; --i)
-
          dataWriter.write(fileContents.substring(1)); // remove final comma from contents
          out.close();
          fstream.close();
          dataWriter.close();
-      } catch (Exception e)
+      }
+      catch (Exception e)
       {
          System.err.println("File output error" + e);
       }
    } // public static void main
+
+   public static int[][] shiftArr(int[][] imageArray, int xShift, int yShift)
+   {
+      int[][] newArr = new int[imageArray.length][imageArray[0].length];
+
+      for (int i = 0; i < imageArray.length; i++)
+      {
+         for (int j = 0; j < imageArray[0].length; j++)
+         {
+            newArr[modulus((i + yShift), imageArray.length)][modulus(j + xShift, imageArray[0].length)] = imageArray[i][j];
+         }
+      }
+      return newArr;
+   }
+
+   public static int modulus (int num, int denom)
+   {
+      return (((num % denom) + denom) % denom);
+   }
+
+   public static double[] findCom(int[][] imageArray)
+   {
+      double pixelSum = 0.0, xDistanceSum = 0.0, yDistanceSum = 0.0;
+
+      for (int i = bmpInfoHeader_biHeight - 1; i >= 0; --i)
+      {
+         for (int j = 0; j < bmpInfoHeader_biWidth; ++j)
+         {
+            pixelSum += imageArray[i][j];
+                
+            xDistanceSum += j * imageArray[i][j];
+            yDistanceSum += i * imageArray[i][j];
+         }
+      }
+
+      return new double[] {xDistanceSum / pixelSum, yDistanceSum / pixelSum};
+    }
 } // public class DibDump

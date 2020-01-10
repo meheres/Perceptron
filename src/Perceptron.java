@@ -126,7 +126,7 @@ public class Perceptron
       {
          activations[0][source] = inputs[source];        // Read inputs & modify input activations, the 0 is hardcoded for the input activation layer.
       }
-      // Forward prop
+      // Forward propagation
       for (int n = 1; n < activations.length; n++)
       {
          for (int dest = 0; dest < activations[n].length; dest++)
@@ -154,11 +154,13 @@ public class Perceptron
    public void backProp(double[] truth)
    {
       int n = activations.length - 1;
+      
       for (int source = 0; source < activations[n].length; source++) // OUTPUT LAYER
       {
          omega[n - 1][source] = truth[source] - activations[n][source];
          psi[n - 1][source] = omega[n - 1][source] * fPrime(theta[n - 1][source]);
       }
+
       for (n = activations.length - 2; n > 0; n--) // HIDDEN LAYERS
       {
          for (int source = 0; source < activations[n].length; source++)
@@ -173,7 +175,9 @@ public class Perceptron
             psi[n - 1][source] = omega[n - 1][source] * fPrime(theta[n - 1][source]);
          } // for (int source = 0; source < activations[n].length; source++)
       }    // for (n = activations.length - 2; n > 0; n--)
+     
       n = 0;
+     
       for (int source = 0; source < activations[n].length; source++) // INPUT LAYER
       {
          for (int dest = 0; dest < activations[n + 1].length; dest++) // index "I" in our 3-layer network
@@ -212,24 +216,37 @@ public class Perceptron
    }
 
    /**
-    * Randomizes the weights in the perceptron.
+    * Method randomizeWeights randomizes the weights in the perceptron.
     *
     * @param lowValue the lowest value that the random weights can go to.
     * @param highValue the highest value that the random weights can go to.
     */
    void randomizeWeights(double lowValue, double highValue)
    {
-      double diff = highValue - lowValue;
       for (int i = 0; i < weights.length; i++)
       {
          for (int j = 0; j < weights[i].length; j++)
          {
             for (int k = 0; k < weights[i][j].length; k++)
             {
-               weights[i][j][k] = (diff * Math.random()) + lowValue;
+               weights[i][j][k] = randomFunction(lowValue, highValue);
             }
          }
       }
+   }
+
+   /**
+    * Method randomFunction does random number logic to be used in randomizing the weights.
+    *
+    * @param lowValue the lowest value that the random weights can go to.
+    * @param highValue the highest value that the random weights can go to.
+    * @return a random double value between the provided low and high values.
+    */
+   double randomFunction(double lowValue, double highValue)
+   {
+      double diff = highValue - lowValue;
+      double randomNumber = (diff * Math.random()) + lowValue;
+      return randomNumber;
    }
 
    /**
@@ -246,7 +263,7 @@ public class Perceptron
    }
 
    /**
-    * Calculate error calculates the perceptron's error in relation to a provided truth value, using the formula written in the
+    * Method calculateError calculates the perceptron's error in relation to a provided truth value, using the formula written in the
     * design document.
     *
     * @param truthValue The truth value, or expected output.

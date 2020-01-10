@@ -239,10 +239,13 @@ public class Trainer
    {
       counter = 0;
 
+      System.out.println("Beginning Training"); //TODO: REMOVE
+
       while ((currError > MINIMUM_ERROR && counter < MAX_STEPS))
       {
          step();
          counter++;
+        // System.out.println("Iteration " + counter + " completed. Error: " + currError + ".");
       }
 
       if (currError <= MINIMUM_ERROR) // The first end condition.
